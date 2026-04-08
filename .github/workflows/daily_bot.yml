@@ -1,0 +1,36 @@
+name: 모멘텀 로테이션 봇 (매일 자동 실행)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 매일 UTC 00:00 = KST 09:00
+  workflow_dispatch:        # GitHub에서 수동 실행 버튼
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write       # 상태 파일 커밋 권한
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 봇 실행
+        run: python momentum_bot.py
+
+      - name: 상태 파일 저장
+        run: |
+          git config --local user.email "bot@momentum"
+          git config --local user.name "Momentum Bot"
+          git add data/
+          git diff --staged --quiet || git commit -m "bot: $(date '+%Y-%m-%d') 실행 결과"
+          git push
