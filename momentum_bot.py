@@ -34,6 +34,7 @@ API_SECRET  = ''       # 실거래 시 입력
 
 STATE_FILE  = Path('data/momentum_bot_state.json')
 TRADE_FILE  = Path('data/momentum_bot_trades.json')
+LOG_FILE    = Path('data/bot_log.jsonl')
 
 # ── 데이터 ────────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,27 @@ def load_trades():
 def save_trades(trades):
     with open(TRADE_FILE, 'w') as f:
         json.dump(trades, f, indent=2, ensure_ascii=False)
+
+
+def append_log(today, signals, target, actions):
+    """매일 실행 결과를 bot_log.jsonl에 한 줄씩 append"""
+    LOG_FILE.parent.mkdir(exist_ok=True)
+    record = {
+        'date'   : today,
+        'target' : target,
+        'actions': actions or [],
+        'signals': {
+            c: {
+                'price'   : round(v['price']),
+                'ma50'    : round(v['ma50']),
+                'momentum': round(v['momentum'], 2),
+                'above_ma': v['above_ma'],
+            }
+            for c, v in signals.items()
+        },
+    }
+    with open(LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(record, ensure_ascii=False) + '\n')
 
 
 # ── 거래 실행 ─────────────────────────────────────────────────────────────────
@@ -366,6 +388,7 @@ def main():
     # 저장
     save_state(state)
     save_trades(trades)
+    append_log(today, signals, target, actions)
 
     # 대시보드
     print_dashboard(state, signals, actions)
