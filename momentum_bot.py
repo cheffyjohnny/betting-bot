@@ -153,7 +153,7 @@ def append_log(today, signals, target, actions):
                 'price'   : round(v['price']),
                 'ma50'    : round(v['ma50']),
                 'momentum': round(v['momentum'], 2),
-                'above_ma': v['above_ma'],
+                'above_ma': bool(v['above_ma']),
             }
             for c, v in signals.items()
         },
