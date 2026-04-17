@@ -1,0 +1,567 @@
+"""
+Apex Mode Bot — 전설의 집합체 전략
+PTJ × Soros × Druckenmiller × Livermore × Richard Dennis
+
+GEAR 1 BEAST:  공격 (최대 90% 투입, 피라미딩 3단계)
+GEAR 2 CRUISE: 표준 (70% 투입, 상위 2코인)
+GEAR 3 BUNKER: 방어 (전량 현금, 시장 떠남)
+
+실행: 매일 1회 (GitHub Actions UTC 00:00 = KST 09:00)
+"""
+
+import sys
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+import ccxt
+import pandas as pd
+import numpy as np
+import json
+import time
+from pathlib import Path
+from datetime import datetime, date
+
+# ── 설정 ─────────────────────────────────────────────────────────────────────
+COINS       = ['BTC', 'ETH', 'XRP', 'SOL']
+FEE         = 0.0005
+INIT_KRW    = 1_000_000
+PAPER_MODE  = True
+API_KEY     = ''
+API_SECRET  = ''
+
+# 기어별 투자 비율 / 최대 보유 코인 수
+GEAR_ALLOC  = {'BEAST': 0.90, 'CRUISE': 0.70, 'BUNKER': 0.00}
+GEAR_MAX    = {'BEAST': 1,    'CRUISE': 2,     'BUNKER': 0}
+
+# 피라미딩 (BEAST 전용) — 3단계 40/30/30
+LOT_SPLITS       = [0.40, 0.30, 0.30]
+PYRAMID_TRIGGER  = 0.03   # 전 단계 진입가 +3% 돌파시 추가 매수
+
+# 리스크 관리
+HARD_STOP_PCT    = 0.08   # 진입 평균가 기준 -8% 하드스탑
+TRAIL_ATR_MULT   = 2.0    # 고점 - ATR×2 트레일링 스탑
+PARTIAL_PROFIT   = 0.15   # +15% 도달시 50% 부분 익절
+ATR_PERIOD       = 14
+
+# 레짐 판단 임계값
+BEAST_COND_NEED  = 3      # BEAST 조건 5개 중 3개 이상
+BUNKER_DROP      = -12.0  # BTC 7일 낙폭 -12% 이하 → BUNKER
+BUNKER_RSI       = 80     # BTC RSI > 80 → 과열 BUNKER
+BEAST_RSI_MAX    = 70     # BTC RSI < 70 이어야 BEAST 가능
+BEAST_MOM_MIN    = 5.0    # BTC 7일 모멘텀 +5% 이상
+BEAST_VOL_MIN    = 1.2    # 거래량 20일 평균 대비 1.2배 이상
+
+STATE_FILE  = Path('data/apex_bot_state.json')
+LOG_FILE    = Path('data/apex_bot_log.jsonl')
+
+
+# ── 지표 계산 ─────────────────────────────────────────────────────────────────
+
+def calc_atr(df, period=ATR_PERIOD):
+    h, l, c = df['high'], df['low'], df['close']
+    prev_c = c.shift(1)
+    tr = pd.concat([h - l, (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
+    return tr.rolling(period).mean().iloc[-1]
+
+
+def calc_rsi(series, period=14):
+    delta = series.diff()
+    gain  = delta.clip(lower=0).rolling(period).mean()
+    loss  = (-delta.clip(upper=0)).rolling(period).mean()
+    rs    = gain / loss
+    return (100 - 100 / (1 + rs)).iloc[-1]
+
+
+def calc_ma(series, period):
+    return series.rolling(period).mean().iloc[-1]
+
+
+# ── 데이터 수집 ───────────────────────────────────────────────────────────────
+
+def fetch_ohlcv(coin, limit=70):
+    try:
+        ex = ccxt.upbit({'enableRateLimit': True})
+        rows = ex.fetch_ohlcv(f'{coin}/KRW', '1d', limit=limit)
+        df = pd.DataFrame(rows, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
+        df['date'] = pd.to_datetime(df['ts'], unit='ms', utc=True).dt.date
+        df = df.set_index('date').sort_index().astype(float)
+        return df
+    except Exception as e:
+        print(f'  {coin} 데이터 오류: {e}')
+        return None
+
+
+# ── 레짐 감지 ─────────────────────────────────────────────────────────────────
+
+def detect_gear(btc_df):
+    """
+    BTC 일봉 데이터로 시장 레짐 판단
+    반환: ('BEAST' | 'CRUISE' | 'BUNKER', 조건 상세)
+    """
+    close  = btc_df['close']
+    price  = close.iloc[-1]
+
+    ma50   = calc_ma(close, 50)
+    ma200  = calc_ma(close, 200)
+    rsi    = calc_rsi(close)
+    mom7   = (price - close.iloc[-8]) / close.iloc[-8] * 100
+    vol    = btc_df['volume'].iloc[-1]
+    vol_ma = btc_df['volume'].rolling(20).mean().iloc[-1]
+    vol_ratio = vol / vol_ma if vol_ma > 0 else 1.0
+
+    # BUNKER 즉시 트리거 (단 하나라도)
+    bunker_triggers = {
+        'BTC<MA50'  : price < ma50,
+        'RSI과열'   : rsi > BUNKER_RSI,
+        '7일급락'   : mom7 < BUNKER_DROP,
+    }
+    if any(bunker_triggers.values()):
+        active = [k for k, v in bunker_triggers.items() if v]
+        return 'BUNKER', {
+            'price': price, 'ma50': ma50, 'ma200': ma200,
+            'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
+            'trigger': active,
+        }
+
+    # BEAST 조건 채점
+    beast_conds = {
+        'BTC>MA50'    : price > ma50,
+        'BTC>MA200'   : price > ma200,
+        'RSI적정'     : rsi < BEAST_RSI_MAX,
+        '거래량확장'  : vol_ratio >= BEAST_VOL_MIN,
+        '7일모멘텀'   : mom7 >= BEAST_MOM_MIN,
+    }
+    beast_score = sum(beast_conds.values())
+
+    details = {
+        'price': price, 'ma50': ma50, 'ma200': ma200,
+        'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
+        'beast_score': beast_score, 'conds': beast_conds,
+    }
+
+    if beast_score >= BEAST_COND_NEED:
+        return 'BEAST', details
+    return 'CRUISE', details
+
+
+# ── 모멘텀 스코어 ─────────────────────────────────────────────────────────────
+
+def calc_momentum_scores(all_data):
+    """
+    스코어 = (7일수익률 × 0.4) + (30일수익률 × 0.3) + (거래량증가율 × 0.3)
+    MA50 아래 코인은 후보에서 제외
+    """
+    scores = {}
+    for coin, df in all_data.items():
+        if df is None or len(df) < 35:
+            continue
+        close = df['close']
+        price = close.iloc[-1]
+        ma50  = calc_ma(close, 50)
+
+        if price < ma50:
+            continue  # MA50 필터
+
+        ret7  = (price - close.iloc[-8])  / close.iloc[-8]  * 100
+        ret30 = (price - close.iloc[-31]) / close.iloc[-31] * 100
+
+        vol       = df['volume'].iloc[-1]
+        vol_ma    = df['volume'].rolling(20).mean().iloc[-1]
+        vol_score = (vol / vol_ma - 1) * 100 if vol_ma > 0 else 0
+
+        score = ret7 * 0.4 + ret30 * 0.3 + vol_score * 0.3
+
+        atr = calc_atr(df)
+        scores[coin] = {
+            'price'     : price,
+            'ma50'      : ma50,
+            'ret7'      : round(ret7, 2),
+            'ret30'     : round(ret30, 2),
+            'vol_ratio' : round(vol / vol_ma if vol_ma > 0 else 1, 2),
+            'score'     : round(score, 2),
+            'atr'       : atr,
+        }
+
+    return dict(sorted(scores.items(), key=lambda x: x[1]['score'], reverse=True))
+
+
+# ── 상태 관리 ─────────────────────────────────────────────────────────────────
+
+def load_state():
+    STATE_FILE.parent.mkdir(exist_ok=True)
+    if STATE_FILE.exists():
+        with open(STATE_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    return {
+        'gear'      : 'CRUISE',
+        'positions' : {},       # {coin: {lots, total_qty, avg_entry, hwm, hard_stop, trailing_stop, partial_exited}}
+        'krw'       : float(INIT_KRW),
+        'init_krw'  : float(INIT_KRW),
+        'last_date' : None,
+    }
+
+
+def save_state(state):
+    with open(STATE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(state, f, indent=2, ensure_ascii=False)
+
+
+def append_log(record):
+    LOG_FILE.parent.mkdir(exist_ok=True)
+    with open(LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(record, ensure_ascii=False) + '\n')
+
+
+def total_value(state, scores):
+    val = state['krw']
+    for coin, pos in state['positions'].items():
+        price = scores[coin]['price'] if coin in scores else pos['avg_entry']
+        val  += pos['total_qty'] * price
+    return val
+
+
+# ── 거래 실행 ─────────────────────────────────────────────────────────────────
+
+def paper_sell_all(state, coin, price):
+    if coin not in state['positions']:
+        return 0
+    pos  = state['positions'].pop(coin)
+    recv = pos['total_qty'] * price * (1 - FEE)
+    state['krw'] += recv
+    return recv
+
+
+def paper_sell_partial(state, coin, price, ratio=0.5):
+    if coin not in state['positions']:
+        return 0
+    pos        = state['positions'][coin]
+    sell_qty   = pos['total_qty'] * ratio
+    recv       = sell_qty * price * (1 - FEE)
+    pos['total_qty']  -= sell_qty
+    pos['partial_exited'] = True
+    state['krw'] += recv
+    # lots 비율 축소
+    for lot in pos['lots']:
+        lot['qty'] *= (1 - ratio)
+    return recv
+
+
+def paper_buy(state, coin, price, krw_amount, lot_num, atr):
+    qty = krw_amount * (1 - FEE) / price
+    state['krw'] -= krw_amount
+
+    if coin not in state['positions']:
+        state['positions'][coin] = {
+            'lots'           : [],
+            'total_qty'      : 0.0,
+            'avg_entry'      : price,
+            'hwm'            : price,
+            'hard_stop'      : round(price * (1 - HARD_STOP_PCT)),
+            'trailing_stop'  : round(price - atr * TRAIL_ATR_MULT),
+            'partial_exited' : False,
+        }
+
+    pos = state['positions'][coin]
+    pos['lots'].append({'lot': lot_num, 'qty': qty, 'entry': price})
+    pos['total_qty'] += qty
+
+    # 평균 진입가 재계산
+    total_cost = sum(l['qty'] * l['entry'] for l in pos['lots'])
+    pos['avg_entry'] = round(total_cost / pos['total_qty'])
+
+    # 하드스탑은 평균 진입가 기준으로 갱신
+    pos['hard_stop'] = round(pos['avg_entry'] * (1 - HARD_STOP_PCT))
+
+    return qty
+
+
+def update_stops(state, scores):
+    """보유 포지션의 고점/트레일링 스탑 갱신"""
+    for coin, pos in state['positions'].items():
+        if coin not in scores:
+            continue
+        price = scores[coin]['price']
+        atr   = scores[coin]['atr']
+
+        if price > pos['hwm']:
+            pos['hwm'] = price
+
+        new_trail = round(pos['hwm'] - atr * TRAIL_ATR_MULT)
+        if new_trail > pos['trailing_stop']:
+            pos['trailing_stop'] = new_trail
+
+
+# ── 메인 로직 ─────────────────────────────────────────────────────────────────
+
+def run(state, gear, gear_details, scores):
+    today    = str(date.today())
+    actions  = []
+    alloc    = GEAR_ALLOC[gear]
+    max_pos  = GEAR_MAX[gear]
+
+    portfolio = total_value(state, scores)
+
+    # ── 0. 스탑 업데이트 ─────────────────────────────────────────────────────
+    update_stops(state, scores)
+
+    # ── 1. 청산 체크 (우선순위 순) ───────────────────────────────────────────
+    to_sell = []
+
+    for coin, pos in list(state['positions'].items()):
+        price = scores[coin]['price'] if coin in scores else pos['avg_entry']
+        reason = None
+
+        if gear == 'BUNKER':
+            reason = 'BUNKER 모드 전환 — 전량 청산'
+        elif price <= pos['hard_stop']:
+            reason = f'하드스탑 ({price:,.0f} <= {pos["hard_stop"]:,.0f})'
+        elif price <= pos['trailing_stop']:
+            reason = f'트레일링 스탑 ({price:,.0f} <= {pos["trailing_stop"]:,.0f})'
+        elif coin not in scores and gear != 'BUNKER':
+            reason = 'MA50 하향돌파 — 후보 제외'
+
+        if reason:
+            to_sell.append((coin, price, reason, 'full'))
+        elif not pos['partial_exited'] and price >= pos['avg_entry'] * (1 + PARTIAL_PROFIT):
+            to_sell.append((coin, price, f'+{PARTIAL_PROFIT*100:.0f}% 부분 익절', 'half'))
+
+    for coin, price, reason, sell_type in to_sell:
+        if sell_type == 'full':
+            recv = paper_sell_all(state, coin, price)
+            actions.append(f'[매도 전량] {coin} @ {price:,.0f}원  수익 {recv:,.0f}원  사유: {reason}')
+        else:
+            recv = paper_sell_partial(state, coin, price)
+            actions.append(f'[매도 50%] {coin} @ {price:,.0f}원  수익 {recv:,.0f}원  사유: {reason}')
+
+    # ── 2. BUNKER — 여기서 종료 ──────────────────────────────────────────────
+    if gear == 'BUNKER':
+        if not actions:
+            actions.append('BUNKER 모드 — 현금 보유 (매매 없음)')
+        return actions
+
+    # ── 3. 피라미딩 체크 (BEAST + 기존 보유) ────────────────────────────────
+    if gear == 'BEAST':
+        for coin, pos in state['positions'].items():
+            if coin not in scores:
+                continue
+            price    = scores[coin]['price']
+            atr      = scores[coin]['atr']
+            lot_done = len(pos['lots'])
+
+            if lot_done >= 3:
+                continue
+
+            prev_entry = pos['lots'][-1]['entry']
+            if price < prev_entry * (1 + PYRAMID_TRIGGER):
+                continue
+
+            # 피라미딩 추가 매수
+            lot_num  = lot_done + 1
+            lot_frac = LOT_SPLITS[lot_done]
+            budget   = portfolio * alloc * lot_frac
+
+            if state['krw'] < budget * 0.5:
+                continue  # KRW 부족
+
+            budget = min(budget, state['krw'] * 0.95)
+            qty = paper_buy(state, coin, price, budget, lot_num, atr)
+            actions.append(
+                f'[피라미딩 {lot_num}차] {coin} @ {price:,.0f}원  {qty:.6f}개  '
+                f'({budget:,.0f}원)'
+            )
+
+    # ── 4. 신규 진입 ─────────────────────────────────────────────────────────
+    top_coins  = list(scores.keys())[:max_pos]
+    held_coins = set(state['positions'].keys())
+
+    # 보유 중이지만 top에 없으면 청산 (포트폴리오 로테이션)
+    for coin in list(held_coins):
+        if coin not in top_coins:
+            price = scores[coin]['price'] if coin in scores else state['positions'][coin]['avg_entry']
+            recv  = paper_sell_all(state, coin, price)
+            actions.append(f'[로테이션 매도] {coin} @ {price:,.0f}원  {recv:,.0f}원')
+
+    for coin in top_coins:
+        if coin in state['positions']:
+            actions.append(f'{coin} 유지 (Lot {len(state["positions"][coin]["lots"])}차)')
+            continue
+
+        price  = scores[coin]['price']
+        atr    = scores[coin]['atr']
+        num_to_buy = len(top_coins)
+
+        if gear == 'BEAST':
+            # BEAST: top1만, Lot1 (40%)
+            budget = portfolio * alloc * LOT_SPLITS[0]
+        else:
+            # CRUISE: 균등 분배
+            budget = portfolio * alloc / num_to_buy
+
+        if state['krw'] < budget * 0.5:
+            actions.append(f'{coin} 진입 실패 — KRW 부족')
+            continue
+
+        budget = min(budget, state['krw'] * 0.95)
+        qty    = paper_buy(state, coin, price, budget, 1, atr)
+        pos    = state['positions'][coin]
+        actions.append(
+            f'[매수 Lot1] {coin} @ {price:,.0f}원  {qty:.6f}개  '
+            f'스탑: {pos["trailing_stop"]:,.0f} / 하드: {pos["hard_stop"]:,.0f}'
+        )
+
+    return actions
+
+
+# ── 대시보드 ──────────────────────────────────────────────────────────────────
+
+GEAR_ICON = {'BEAST': '★ BEAST', 'CRUISE': '◎ CRUISE', 'BUNKER': '■ BUNKER'}
+GEAR_DESC = {
+    'BEAST' : '공격 모드 (90% 투입, 피라미딩)',
+    'CRUISE': '표준 모드 (70% 투입, 분산)',
+    'BUNKER': '방어 모드 (전량 현금)',
+}
+
+def print_dashboard(state, gear, gear_details, scores, actions):
+    today = str(date.today())
+    total = total_value(state, scores)
+    init  = state['init_krw']
+    pnl   = (total - init) / init * 100
+
+    print()
+    print('=' * 65)
+    print(f'  Apex Mode Bot  {today}')
+    print(f'  {GEAR_ICON[gear]}  —  {GEAR_DESC[gear]}')
+    print('=' * 65)
+
+    # 레짐 상세
+    d = gear_details
+    print(f'\n  [레짐 판단]')
+    print(f'  BTC {d["price"]:,.0f}원  MA50:{d["ma50"]:,.0f}  MA200:{d["ma200"]:,.0f}')
+    print(f'  RSI:{d["rsi"]:.1f}  7일모멘텀:{d["mom7"]:+.1f}%  거래량:{d["vol_ratio"]:.2f}x')
+    if gear == 'BUNKER':
+        print(f'  트리거: {d["trigger"]}')
+    else:
+        score = d.get('beast_score', '-')
+        conds_str = ', '.join(f'{k}:{"O" if v else "X"}' for k, v in d.get('conds', {}).items())
+        print(f'  BEAST 점수: {score}/5  [{conds_str}]')
+
+    # 코인 스코어
+    print(f'\n  [코인 모멘텀 스코어]')
+    print(f'  {"코인":>5}  {"현재가":>13}  {"7일":>7}  {"30일":>7}  {"거래량":>7}  {"스코어":>8}  {"선택"}')
+    print(f'  {"─"*63}')
+    selected = list(scores.keys())[:GEAR_MAX[gear]]
+    for i, (coin, s) in enumerate(scores.items()):
+        sel = '★' if coin in selected else ''
+        print(f'  {coin:>5}  {s["price"]:>12,.0f}원  {s["ret7"]:>+6.1f}%  '
+              f'{s["ret30"]:>+6.1f}%  {s["vol_ratio"]:>5.2f}x  {s["score"]:>8.1f}  {sel}')
+
+    # 포지션
+    print(f'\n  [포지션]')
+    if state['positions']:
+        for coin, pos in state['positions'].items():
+            price   = scores[coin]['price'] if coin in scores else pos['avg_entry']
+            unreal  = (price - pos['avg_entry']) / pos['avg_entry'] * 100
+            hwm_pct = (pos['hwm'] - pos['avg_entry']) / pos['avg_entry'] * 100
+            print(f'  {coin}: {pos["total_qty"]:.6f}개  평균진입:{pos["avg_entry"]:,}  현재:{price:,}  '
+                  f'미실현:{unreal:+.2f}%')
+            print(f'       고점:{pos["hwm"]:,}({hwm_pct:+.1f}%)  '
+                  f'트레일:{pos["trailing_stop"]:,}  하드:{pos["hard_stop"]:,}  '
+                  f'Lot{len(pos["lots"])}차  부분익절:{pos["partial_exited"]}')
+    else:
+        print(f'  현금 보유 중')
+
+    # 손익
+    print(f'\n  {"─"*63}')
+    print(f'  총 평가액  : {total:>14,.0f}원')
+    print(f'  초기 자본  : {init:>14,.0f}원')
+    print(f'  손익       : {pnl:>+.2f}%  ({total-init:>+,.0f}원)')
+    print(f'  현금       : {state["krw"]:>14,.0f}원')
+
+    # 오늘 실행
+    if actions:
+        print(f'\n  [오늘 실행]')
+        for a in actions:
+            print(f'  → {a}')
+    print()
+
+
+# ── 진입점 ────────────────────────────────────────────────────────────────────
+
+def main():
+    args        = sys.argv[1:]
+    status_only = 'status' in args
+
+    print('Apex Mode Bot 시작...')
+
+    # 1. 데이터 수집
+    print('\n[데이터 수집]')
+    all_data = {}
+    for coin in COINS:
+        print(f'  {coin} 수집 중...')
+        all_data[coin] = fetch_ohlcv(coin, limit=80)
+        time.sleep(0.3)
+
+    # BTC는 MA200 계산을 위해 더 많이 재수집
+    print('  BTC MA200용 추가 수집...')
+    all_data['BTC'] = fetch_ohlcv('BTC', limit=220)
+    time.sleep(0.3)
+
+    btc_df = all_data.get('BTC')
+    if btc_df is None or len(btc_df) < 50:
+        print('BTC 데이터 부족. 종료.')
+        return
+
+    # 2. 레짐 판단
+    print('\n[레짐 판단]')
+    gear, gear_details = detect_gear(btc_df)
+    print(f'  → {GEAR_ICON[gear]}')
+
+    # 3. 모멘텀 스코어
+    print('\n[모멘텀 스코어 계산]')
+    scores = calc_momentum_scores(all_data)
+    for coin, s in scores.items():
+        print(f'  {coin}: 스코어={s["score"]:.1f}  7일={s["ret7"]:+.1f}%  30일={s["ret30"]:+.1f}%')
+
+    # 상태 로드
+    state = load_state()
+
+    if status_only:
+        print_dashboard(state, gear, gear_details, scores, [])
+        return
+
+    # 오늘 이미 실행했으면 스킵
+    today = str(date.today())
+    if state.get('last_date') == today:
+        print(f'오늘({today}) 이미 실행 완료. status 모드로 전환.')
+        print_dashboard(state, gear, gear_details, scores, [])
+        return
+
+    # 4. 전략 실행
+    print('\n[전략 실행]')
+    actions = run(state, gear, gear_details, scores)
+    state['gear']      = gear
+    state['last_date'] = today
+
+    # 5. 저장 & 로그
+    save_state(state)
+    append_log({
+        'date'        : today,
+        'gear'        : gear,
+        'btc_ma50'    : round(gear_details['ma50']),
+        'btc_rsi'     : round(gear_details['rsi'], 1),
+        'btc_mom7'    : round(gear_details['mom7'], 2),
+        'scores'      : {c: {'score': s['score'], 'price': round(s['price'])}
+                         for c, s in scores.items()},
+        'positions'   : {c: {'avg_entry': p['avg_entry'], 'total_qty': round(p['total_qty'], 6)}
+                         for c, p in state['positions'].items()},
+        'krw'         : round(state['krw']),
+        'actions'     : actions,
+    })
+
+    # 6. 대시보드
+    print_dashboard(state, gear, gear_details, scores, actions)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,4 +1,4 @@
-name: 모멘텀 로테이션 봇 (매일 자동 실행)
+name: Apex Mode Bot (매일 자동 실행)
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 봇 실행
-        run: python momentum_bot.py
+        run: python apex_bot.py
         env:
           PYTHONIOENCODING: utf-8
 
