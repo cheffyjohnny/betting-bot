@@ -1,0 +1,42 @@
+name: Apex Mode — Stop Checker (4시간마다)
+
+on:
+  schedule:
+    # UTC 02:00, 06:00, 10:00, 14:00, 18:00, 22:00 (KST 11:00, 15:00, 19:00, 23:00, 03:00, 07:00)
+    # apex_bot(UTC 00:00)과 충돌 방지를 위해 짝수+2 시간대 사용
+    - cron: '0 2,6,10,14,18,22 * * *'
+  workflow_dispatch:
+
+jobs:
+  stop-check:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 스탑 체크 실행
+        run: python stop_checker.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: 상태 파일 저장
+        if: always()
+        run: |
+          git config --local user.email "bot@apex"
+          git config --local user.name "Apex Stop Checker"
+          git pull --rebase
+          git add data/ || true
+          git diff --staged --quiet || git commit -m "stop: $(date '+%Y-%m-%d %H:%M') 스탑 체크"
+          git push || true
