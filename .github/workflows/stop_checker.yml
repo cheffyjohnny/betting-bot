@@ -36,7 +36,7 @@ jobs:
         run: |
           git config --local user.email "bot@apex"
           git config --local user.name "Apex Stop Checker"
-          git pull --rebase
           git add data/ || true
+          git pull --rebase
           git diff --staged --quiet || git commit -m "stop: $(date '+%Y-%m-%d %H:%M') 스탑 체크"
           git push || true
