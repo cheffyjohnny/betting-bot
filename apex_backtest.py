@@ -23,10 +23,12 @@ GEAR_MAX        = {'BEAST': 1,    'CRUISE': 2,     'CAUTION': 1,    'BUNKER': 0}
 
 LOT_SPLITS      = [0.40, 0.30, 0.30]
 PYRAMID_TRIGGER = 0.03
-HARD_STOP_PCT   = 0.08
-TRAIL_ATR_MULT  = 2.0
-PARTIAL_PROFIT  = 0.15
-ATR_PERIOD      = 14
+HARD_STOP_PCT        = 0.08
+TRAIL_ATR_MULT       = 2.0
+TRAIL_ATR_MULT_BULL  = 3.0   # 장기 상승장(BTC>MA200)에서 더 넓은 트레일링
+PARTIAL_PROFIT       = 0.15
+ATR_PERIOD           = 14
+ROTATION_THRESHOLD   = 0.20  # 상승장에서 로테이션 발생 조건: 신규 코인 스코어가 현재보다 20% 이상 높을 때만
 
 BEAST_COND_NEED  = 3
 BUNKER_DROP      = -12.0
@@ -40,7 +42,8 @@ BEAST_VOL_MIN    = 1.2
 # 2 = 개선1: 3개 조건 중 2개 이상이어야 BUNKER
 # 3 = 개선2: RSI과열 or 7일급락 → BUNKER / BTC<MA50 단독 → CAUTION(40%)
 # 4 = 동적:  BTC>MA200이면 V3 / BTC<MA200이면 V1 (매크로 레짐 자동 전환)
-BUNKER_COND_NEED = 1
+BUNKER_COND_NEED    = 1
+BULL_ENHANCEMENTS   = False  # True = 상승장 ATR×3 + 로테이션 임계값 (V5 전용)
 
 SIM_START = date(2024, 1, 1)   # 기본값 (비교 분석 시 덮어씀)
 SIM_END   = date(2024, 12, 31)
@@ -128,19 +131,23 @@ def detect_gear(btc_df):
     vol_ratio = vol / vol_ma if vol_ma > 0 else 1.0
 
     below_ma50  = price < ma50
+    above_ma200 = price > ma200
     rsi_hot     = rsi > BUNKER_RSI
     crash7      = mom7 < BUNKER_DROP
 
-    if BUNKER_COND_NEED == 3:
-        # V3: RSI과열 or 7일급락 → BUNKER / BTC<MA50 단독 → CRUISE 상한
+    # BUNKER 트리거 판단
+    if BUNKER_COND_NEED == 4:
+        # V4/V5 동적: MA200 기준 레짐 전환
+        # 장기 하락장(BTC<MA200) → V1 원본 (MA50 하나만으로 BUNKER)
+        # 장기 상승장(BTC>MA200) → 완화 (RSI과열/7일급락만 BUNKER)
+        go_bunker = (rsi_hot or crash7) or (not above_ma200 and below_ma50)
+    elif BUNKER_COND_NEED == 3:
         go_bunker = rsi_hot or crash7
     else:
-        # V1(1개) or V2(2개)
-        bunker_score = int(below_ma50) + int(rsi_hot) + int(crash7)
-        go_bunker    = bunker_score >= BUNKER_COND_NEED
+        go_bunker = sum([int(below_ma50), int(rsi_hot), int(crash7)]) >= BUNKER_COND_NEED
 
-    active = ([k for k, v in {'BTC<MA50': below_ma50, 'RSI과열': rsi_hot,
-                               '7일급락': crash7}.items() if v])
+    active = [k for k, v in {'BTC<MA50': below_ma50, 'RSI과열': rsi_hot,
+                              '7일급락': crash7}.items() if v]
     base_details = {'price': price, 'ma50': ma50, 'ma200': ma200,
                     'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
                     'trigger': active}
@@ -149,21 +156,17 @@ def detect_gear(btc_df):
         return 'BUNKER', base_details
 
     beast_conds = {
-        'BTC>MA50'  : price > ma50,
-        'BTC>MA200' : price > ma200,
+        'BTC>MA50'  : not below_ma50,
+        'BTC>MA200' : above_ma200,
         'RSI적정'   : rsi < BEAST_RSI_MAX,
         '거래량확장': vol_ratio >= BEAST_VOL_MIN,
         '7일모멘텀' : mom7 >= BEAST_MOM_MIN,
     }
     beast_score = sum(beast_conds.values())
-    details = {**base_details, 'beast_score': beast_score, 'conds': beast_conds}
+    details     = {**base_details, 'beast_score': beast_score, 'conds': beast_conds}
 
-    # V4: 매크로 레짐(MA200) 기반 동적 전환
-    # V3: BTC<MA50 단독이면 CAUTION (40% 투자, 1코인)
-    in_bull_macro = price > ma200
-    use_v3 = (BUNKER_COND_NEED == 3) or (BUNKER_COND_NEED == 4 and in_bull_macro)
-
-    if use_v3 and below_ma50:
+    # V4/V5: 장기 상승장(BTC>MA200) + BTC<MA50 단독 → CAUTION
+    if BUNKER_COND_NEED >= 3 and above_ma200 and below_ma50:
         return 'CAUTION', details
 
     if beast_score >= BEAST_COND_NEED:
@@ -233,16 +236,18 @@ def paper_sell_partial(state, coin, price, ratio=0.5):
     return recv
 
 
-def paper_buy(state, coin, price, krw_amount, lot_num, atr):
+def paper_buy(state, coin, price, krw_amount, lot_num, atr, bull_macro=False):
     qty = krw_amount * (1 - FEE) / price
     state['krw'] -= krw_amount
+    trail_mult = TRAIL_ATR_MULT_BULL if (BULL_ENHANCEMENTS and bull_macro) else TRAIL_ATR_MULT
     if coin not in state['positions']:
         state['positions'][coin] = {
             'lots': [], 'total_qty': 0.0, 'avg_entry': price,
             'hwm': price,
             'hard_stop'     : round(price * (1 - HARD_STOP_PCT)),
-            'trailing_stop' : round(price - atr * TRAIL_ATR_MULT),
+            'trailing_stop' : round(price - atr * trail_mult),
             'partial_exited': False,
+            'bull_macro'    : bull_macro,
         }
     pos = state['positions'][coin]
     pos['lots'].append({'lot': lot_num, 'qty': qty, 'entry': price})
@@ -257,11 +262,12 @@ def update_stops(state, scores):
     for coin, pos in state['positions'].items():
         if coin not in scores:
             continue
-        price = scores[coin]['price']
-        atr   = scores[coin]['atr']
+        price      = scores[coin]['price']
+        atr        = scores[coin]['atr']
+        trail_mult = TRAIL_ATR_MULT_BULL if (BULL_ENHANCEMENTS and pos.get('bull_macro')) else TRAIL_ATR_MULT
         if price > pos['hwm']:
             pos['hwm'] = price
-        new_trail = round(pos['hwm'] - atr * TRAIL_ATR_MULT)
+        new_trail = round(pos['hwm'] - atr * trail_mult)
         if new_trail > pos['trailing_stop']:
             pos['trailing_stop'] = new_trail
 
@@ -284,9 +290,10 @@ def intraday_stop_check(state, all_data, sim_date, actions):
 
         # HWM 갱신
         if day_high > pos['hwm']:
-            pos['hwm'] = day_high
-            atr = calc_atr(slice_df(df, sim_date))
-            new_trail = round(pos['hwm'] - atr * TRAIL_ATR_MULT)
+            pos['hwm']  = day_high
+            atr         = calc_atr(slice_df(df, sim_date))
+            trail_mult  = TRAIL_ATR_MULT_BULL if (BULL_ENHANCEMENTS and pos.get('bull_macro')) else TRAIL_ATR_MULT
+            new_trail   = round(pos['hwm'] - atr * trail_mult)
             if new_trail > pos['trailing_stop']:
                 pos['trailing_stop'] = new_trail
 
@@ -311,9 +318,10 @@ def intraday_stop_check(state, all_data, sim_date, actions):
 # ── 일별 전략 실행 ────────────────────────────────────────────────────────────
 
 def run_day(state, gear, gear_details, scores, actions):
-    alloc    = GEAR_ALLOC[gear]
-    max_pos  = GEAR_MAX[gear]
-    portfolio = total_value(state, scores)
+    alloc      = GEAR_ALLOC[gear]
+    max_pos    = GEAR_MAX[gear]
+    bull_macro = gear_details.get('price', 0) > gear_details.get('ma200', 0)
+    portfolio  = total_value(state, scores)
 
     update_stops(state, scores)
 
@@ -371,6 +379,13 @@ def run_day(state, gear, gear_details, scores, actions):
 
     for coin in list(held_coins):
         if coin not in top_coins:
+            # 상승장에서는 스코어 차이가 ROTATION_THRESHOLD 이상일 때만 로테이션
+            if BULL_ENHANCEMENTS and bull_macro and coin in scores:
+                held_score = scores[coin]['score']
+                new_top    = scores[list(scores.keys())[0]]['score'] if scores else 0
+                if new_top <= 0 or (new_top - held_score) / abs(new_top) < ROTATION_THRESHOLD:
+                    actions.append(f'  {coin} 유지 (로테이션 임계값 미달)')
+                    continue
             price = scores[coin]['price'] if coin in scores else state['positions'][coin]['avg_entry']
             recv  = paper_sell_all(state, coin, price)
             actions.append(f'  [로테이션 매도] {coin} @ {price:,.0f}  {recv:,.0f}원')
@@ -388,7 +403,7 @@ def run_day(state, gear, gear_details, scores, actions):
             actions.append(f'  {coin} 진입 실패 — KRW 부족')
             continue
         budget = min(budget, state['krw'] * 0.95)
-        qty    = paper_buy(state, coin, price, budget, 1, atr)
+        qty    = paper_buy(state, coin, price, budget, 1, atr, bull_macro)
         pos    = state['positions'][coin]
         actions.append(f'  [매수 Lot1] {coin} @ {price:,.0f}  {qty:.6f}개  '
                        f'트레일:{pos["trailing_stop"]:,.0f} 하드:{pos["hard_stop"]:,.0f}')
@@ -672,9 +687,11 @@ def run_comparison():
     print('\n[데이터 수집]')
     all_data = fetch_all_history()
 
+    global BUNKER_COND_NEED, BULL_ENHANCEMENTS
     results = {}
-    for version, cond in [('V1_원본', 1), ('V3_개선', 3), ('V4_동적', 4)]:
-        BUNKER_COND_NEED = cond
+    for version, cond, bull_enh in [('V1_원본', 1, False), ('V4_동적', 4, False), ('V5_개선', 4, True)]:
+        BUNKER_COND_NEED  = cond
+        BULL_ENHANCEMENTS = bull_enh
         for label, period in [('상승장', BULL), ('하락장', BEAR)]:
             key = f'{version}_{label}'
             print(f'  [{version} / {label}] 시뮬 중...')
@@ -684,10 +701,10 @@ def run_comparison():
 
     # ── 출력 ──────────────────────────────────────────────────────────────────
     W = 80
-    cols = ['V1_원본_상승장', 'V3_개선_상승장', 'V4_동적_상승장',
-            'V1_원본_하락장', 'V3_개선_하락장', 'V4_동적_하락장']
-    hdrs = ['V1 원본 2024', 'V3 개선 2024', 'V4 동적 2024',
-            'V1 원본 25~26', 'V3 개선 25~26', 'V4 동적 25~26']
+    cols = ['V1_원본_상승장', 'V4_동적_상승장', 'V5_개선_상승장',
+            'V1_원본_하락장', 'V4_동적_하락장', 'V5_개선_하락장']
+    hdrs = ['V1 원본 2024', 'V4 동적 2024', 'V5 개선 2024',
+            'V1 원본 25~26', 'V4 동적 25~26', 'V5 개선 25~26']
 
     def row(label, vals):
         print(f'  {label:<22}' + ''.join(f'  {v:>14}' for v in vals))
@@ -731,24 +748,26 @@ def run_comparison():
     print('=' * W)
     print('  [핵심 비교]')
     v1b = results['V1_원본_상승장']
-    v3b = results['V3_개선_상승장']
     v4b = results['V4_동적_상승장']
+    v5b = results['V5_개선_상승장']
     v1r = results['V1_원본_하락장']
-    v3r = results['V3_개선_하락장']
     v4r = results['V4_동적_하락장']
+    v5r = results['V5_개선_하락장']
 
-    print(f'  {"":18}  {"V1 원본":>10}  {"V3 개선":>10}  {"V4 동적":>10}')
-    print(f'  {"─"*52}')
-    print(f'  {"[상승장 2024]":18}')
-    print(f'  {"  수익률":18}  {v1b["apex_pnl"]:>+9.2f}%  {v3b["apex_pnl"]:>+9.2f}%  {v4b["apex_pnl"]:>+9.2f}%')
-    print(f'  {"  MDD":18}  {v1b["apex_mdd"]:>9.2f}%  {v3b["apex_mdd"]:>9.2f}%  {v4b["apex_mdd"]:>9.2f}%')
-    print(f'  {"  BUNKER일수":18}  {v1b["gear_cnt"]["BUNKER"]:>9}일  {v3b["gear_cnt"]["BUNKER"]:>9}일  {v4b["gear_cnt"]["BUNKER"]:>9}일')
-    print(f'  {"  CAUTION일수":18}  {v1b["gear_cnt"]["CAUTION"]:>9}일  {v3b["gear_cnt"]["CAUTION"]:>9}일  {v4b["gear_cnt"]["CAUTION"]:>9}일')
-    print(f'  {"[하락장 25~26]":18}')
-    print(f'  {"  수익률":18}  {v1r["apex_pnl"]:>+9.2f}%  {v3r["apex_pnl"]:>+9.2f}%  {v4r["apex_pnl"]:>+9.2f}%')
-    print(f'  {"  MDD":18}  {v1r["apex_mdd"]:>9.2f}%  {v3r["apex_mdd"]:>9.2f}%  {v4r["apex_mdd"]:>9.2f}%')
-    print(f'  {"  BUNKER일수":18}  {v1r["gear_cnt"]["BUNKER"]:>9}일  {v3r["gear_cnt"]["BUNKER"]:>9}일  {v4r["gear_cnt"]["BUNKER"]:>9}일')
-    print(f'  {"  CAUTION일수":18}  {v1r["gear_cnt"]["CAUTION"]:>9}일  {v3r["gear_cnt"]["CAUTION"]:>9}일  {v4r["gear_cnt"]["CAUTION"]:>9}일')
+    print(f'  {"":18}  {"V1 원본":>10}  {"V4 동적":>10}  {"V5 개선":>10}')
+    print(f'  {"─"*54}')
+    print(f'  {"[상승장 2024]":18}  {"BTC +136.67%":>32}')
+    print(f'  {"  수익률":18}  {v1b["apex_pnl"]:>+9.2f}%  {v4b["apex_pnl"]:>+9.2f}%  {v5b["apex_pnl"]:>+9.2f}%')
+    print(f'  {"  MDD":18}  {v1b["apex_mdd"]:>9.2f}%  {v4b["apex_mdd"]:>9.2f}%  {v5b["apex_mdd"]:>9.2f}%')
+    print(f'  {"  매매횟수":18}  {v1b["buy_cnt"]:>9}회  {v4b["buy_cnt"]:>9}회  {v5b["buy_cnt"]:>9}회')
+    print(f'  {"  BUNKER일수":18}  {v1b["gear_cnt"]["BUNKER"]:>9}일  {v4b["gear_cnt"]["BUNKER"]:>9}일  {v5b["gear_cnt"]["BUNKER"]:>9}일')
+    print(f'  {"  CAUTION일수":18}  {v1b["gear_cnt"]["CAUTION"]:>9}일  {v4b["gear_cnt"]["CAUTION"]:>9}일  {v5b["gear_cnt"]["CAUTION"]:>9}일')
+    print(f'  {"[하락장 25~26]":18}  {"BTC -8.68%":>32}')
+    print(f'  {"  수익률":18}  {v1r["apex_pnl"]:>+9.2f}%  {v4r["apex_pnl"]:>+9.2f}%  {v5r["apex_pnl"]:>+9.2f}%')
+    print(f'  {"  MDD":18}  {v1r["apex_mdd"]:>9.2f}%  {v4r["apex_mdd"]:>9.2f}%  {v5r["apex_mdd"]:>9.2f}%')
+    print(f'  {"  매매횟수":18}  {v1r["buy_cnt"]:>9}회  {v4r["buy_cnt"]:>9}회  {v5r["buy_cnt"]:>9}회')
+    print(f'  {"  BUNKER일수":18}  {v1r["gear_cnt"]["BUNKER"]:>9}일  {v4r["gear_cnt"]["BUNKER"]:>9}일  {v5r["gear_cnt"]["BUNKER"]:>9}일')
+    print(f'  {"  CAUTION일수":18}  {v1r["gear_cnt"]["CAUTION"]:>9}일  {v4r["gear_cnt"]["CAUTION"]:>9}일  {v5r["gear_cnt"]["CAUTION"]:>9}일')
     print('=' * W)
 
 

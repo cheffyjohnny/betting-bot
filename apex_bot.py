@@ -40,10 +40,12 @@ LOT_SPLITS       = [0.40, 0.30, 0.30]
 PYRAMID_TRIGGER  = 0.03   # 전 단계 진입가 +3% 돌파시 추가 매수
 
 # 리스크 관리
-HARD_STOP_PCT    = 0.08   # 진입 평균가 기준 -8% 하드스탑
-TRAIL_ATR_MULT   = 2.0    # 고점 - ATR×2 트레일링 스탑
-PARTIAL_PROFIT   = 0.15   # +15% 도달시 50% 부분 익절
-ATR_PERIOD       = 14
+HARD_STOP_PCT       = 0.08   # 진입 평균가 기준 -8% 하드스탑
+TRAIL_ATR_MULT      = 2.0    # 고점 - ATR×2 트레일링 스탑 (하락장/기본)
+TRAIL_ATR_MULT_BULL = 3.0    # 고점 - ATR×3 트레일링 스탑 (장기 상승장 BTC>MA200)
+PARTIAL_PROFIT      = 0.15   # +15% 도달시 50% 부분 익절
+ATR_PERIOD          = 14
+ROTATION_THRESHOLD  = 0.20   # 상승장 로테이션 조건: 신규 스코어가 현재보다 20% 이상 높을 때만
 
 # 레짐 판단 임계값
 BEAST_COND_NEED  = 3      # BEAST 조건 5개 중 3개 이상
@@ -257,8 +259,9 @@ def paper_sell_partial(state, coin, price, ratio=0.5):
     return recv
 
 
-def paper_buy(state, coin, price, krw_amount, lot_num, atr):
-    qty = krw_amount * (1 - FEE) / price
+def paper_buy(state, coin, price, krw_amount, lot_num, atr, bull_macro=False):
+    qty        = krw_amount * (1 - FEE) / price
+    trail_mult = TRAIL_ATR_MULT_BULL if bull_macro else TRAIL_ATR_MULT
     state['krw'] -= krw_amount
 
     if coin not in state['positions']:
@@ -268,8 +271,9 @@ def paper_buy(state, coin, price, krw_amount, lot_num, atr):
             'avg_entry'      : price,
             'hwm'            : price,
             'hard_stop'      : round(price * (1 - HARD_STOP_PCT)),
-            'trailing_stop'  : round(price - atr * TRAIL_ATR_MULT),
+            'trailing_stop'  : round(price - atr * trail_mult),
             'partial_exited' : False,
+            'bull_macro'     : bull_macro,
         }
 
     pos = state['positions'][coin]
@@ -291,13 +295,14 @@ def update_stops(state, scores):
     for coin, pos in state['positions'].items():
         if coin not in scores:
             continue
-        price = scores[coin]['price']
-        atr   = scores[coin]['atr']
+        price      = scores[coin]['price']
+        atr        = scores[coin]['atr']
+        trail_mult = TRAIL_ATR_MULT_BULL if pos.get('bull_macro') else TRAIL_ATR_MULT
 
         if price > pos['hwm']:
             pos['hwm'] = price
 
-        new_trail = round(pos['hwm'] - atr * TRAIL_ATR_MULT)
+        new_trail = round(pos['hwm'] - atr * trail_mult)
         if new_trail > pos['trailing_stop']:
             pos['trailing_stop'] = new_trail
 
@@ -305,10 +310,11 @@ def update_stops(state, scores):
 # ── 메인 로직 ─────────────────────────────────────────────────────────────────
 
 def run(state, gear, gear_details, scores):
-    today    = str(date.today())
-    actions  = []
-    alloc    = GEAR_ALLOC[gear]
-    max_pos  = GEAR_MAX[gear]
+    today      = str(date.today())
+    actions    = []
+    alloc      = GEAR_ALLOC[gear]
+    max_pos    = GEAR_MAX[gear]
+    bull_macro = gear_details.get('price', 0) > gear_details.get('ma200', 0)
 
     portfolio = total_value(state, scores)
 
@@ -375,7 +381,7 @@ def run(state, gear, gear_details, scores):
                 continue  # KRW 부족
 
             budget = min(budget, state['krw'] * 0.95)
-            qty = paper_buy(state, coin, price, budget, lot_num, atr)
+            qty = paper_buy(state, coin, price, budget, lot_num, atr, bull_macro)
             actions.append(
                 f'[피라미딩 {lot_num}차] {coin} @ {price:,.0f}원  {qty:.6f}개  '
                 f'({budget:,.0f}원)'
@@ -388,6 +394,13 @@ def run(state, gear, gear_details, scores):
     # 보유 중이지만 top에 없으면 청산 (포트폴리오 로테이션)
     for coin in list(held_coins):
         if coin not in top_coins:
+            # 상승장에서는 스코어 차이가 ROTATION_THRESHOLD 이상일 때만 로테이션
+            if bull_macro and coin in scores:
+                held_score = scores[coin]['score']
+                top_score  = scores[list(scores.keys())[0]]['score'] if scores else 0
+                if top_score <= 0 or (top_score - held_score) / abs(top_score) < ROTATION_THRESHOLD:
+                    actions.append(f'{coin} 유지 (로테이션 임계값 미달)')
+                    continue
             price = scores[coin]['price'] if coin in scores else state['positions'][coin]['avg_entry']
             recv  = paper_sell_all(state, coin, price)
             actions.append(f'[로테이션 매도] {coin} @ {price:,.0f}원  {recv:,.0f}원')
@@ -413,7 +426,7 @@ def run(state, gear, gear_details, scores):
             continue
 
         budget = min(budget, state['krw'] * 0.95)
-        qty    = paper_buy(state, coin, price, budget, 1, atr)
+        qty    = paper_buy(state, coin, price, budget, 1, atr, bull_macro)
         pos    = state['positions'][coin]
         actions.append(
             f'[매수 Lot1] {coin} @ {price:,.0f}원  {qty:.6f}개  '
