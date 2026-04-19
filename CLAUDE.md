@@ -13,11 +13,11 @@
 | KST 09:00 (매일) | `apex_bot.py` | 기어 판단 + 진입/로테이션/피라미딩 |
 | KST 11,15,19,23,03,07시 | `stop_checker.py` | 스탑 체크 + HWM 갱신 (4시간마다) |
 
-## Apex Mode 전략 (2026-04-18 도입)
+## Apex Mode 전략 V5 (2026-04-19 업데이트)
 
 **핵심 철학:** 줄 때 최대한 가져가고, 빼앗길 때 절대 내주지 마라
 
-### 3기어 레짐 (BTC 일봉 기준)
+### 4기어 레짐 (BTC 일봉 기준)
 
 **BEAST** — 5개 조건 중 3개 이상 충족 시
 - 조건: BTC>MA50, BTC>MA200, RSI<70, 거래량>MA20×1.2, 7일모멘텀>+5%
@@ -26,16 +26,21 @@
 **CRUISE** — 기본값
 - 행동: 70% 투입 + top2 코인 분산
 
-**BUNKER** — 즉시 트리거 (1개라도 해당 시)
-- 트리거: BTC<MA50 / BTC RSI>80 / 7일낙폭<-12%
+**CAUTION** — BTC>MA200 (bull macro) + BTC<MA50 시
+- 행동: 40% 투입 + top1 코인 (방어적 포지션)
+
+**BUNKER** — 즉시 트리거
+- bull macro (BTC>MA200): RSI>80 또는 7일낙폭<-12% 시만 발동
+- bear macro (BTC<MA200): BTC<MA50 / RSI>80 / 7일낙폭<-12% 중 1개라도 해당 시
 - 행동: 전량 즉시 청산 → 현금 100%
 
 ### 리스크 관리
 
 - **하드스탑:** 평균 진입가 -8% (즉시 청산)
-- **트레일링 스탑:** HWM - ATR(14)×2 (4시간마다 갱신)
+- **트레일링 스탑:** HWM - ATR(14)×2 (bear macro) / ATR(14)×3 (bull macro)
 - **부분 익절:** +15% 도달 시 50% 청산
 - **피라미딩 트리거:** 전 단계 진입가 +3% 돌파 시 추가 매수 (BEAST 전용)
+- **로테이션 임계값:** bull macro 시 새 코인 스코어가 20% 이상 높을 때만 교체
 
 ### 모멘텀 스코어
 
@@ -58,6 +63,7 @@ MA50 아래 코인은 후보 제외
 - `momentum_rotation.py` — 200MA 필터 포함 백테스트
 - `momentum_exhaustive.py` — 파라미터 전수 조사 (~7,000가지)
 - `ultimate_backtest.py` — 전략 4종 비교
+- `apex_backtest.py` — V1/V4/V5 전략 상승장/하락장 비교 백테스트
 
 ### 데이터
 - `data/apex_bot_state.json` — 현재 포지션 상태 (Apex)
@@ -85,8 +91,20 @@ MA50 아래 코인은 후보 제외
 3. 바이낸스 선물 계좌 → 하락장 숏 전략 추가
 4. MVRV 온체인 지표 추가 검토
 
+## V5 백테스트 결과 (apex_backtest.py 기준)
+
+| 기간 | 전략 | 수익률 | BTC 홀딩 | MDD |
+|------|------|--------|---------|-----|
+| 2024 (상승장) | V5 | +33.34% | +136.67% | -53.87% |
+| 2025~26 (하락장) | V5 | +24.88% | -8.74% | -18% |
+
+- 상승장에서 BTC 홀딩을 이기기 어려운 구조적 이유: BUNKER 기간 수익 0%
+- 하락장 방어가 이 전략의 핵심 강점
+
 ## 이슈 해결 이력
 
 - numpy bool JSON 오류: `above_ma`가 numpy.bool_ → `bool()` 변환 (`cdb240a`)
-- Actions push 충돌: `git pull --rebase` 추가로 해결
+- Actions push 충돌: `git add` → `git commit` → `git pull --rebase` → `git push` 순서로 해결
 - BTC MA200 nan: limit=80으로 부족 → limit=220으로 재수집 처리
+- pandas_ta Python 3.11 설치 실패: requirements.txt에서 제거 (레거시 파일에서만 사용)
+- stop_checker.py V5 동기화: bull_macro 포지션에 ATR×3 적용 (`82901e2`)
