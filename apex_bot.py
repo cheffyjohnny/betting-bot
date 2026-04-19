@@ -31,8 +31,9 @@ API_KEY     = ''
 API_SECRET  = ''
 
 # 기어별 투자 비율 / 최대 보유 코인 수
-GEAR_ALLOC  = {'BEAST': 0.90, 'CRUISE': 0.70, 'BUNKER': 0.00}
-GEAR_MAX    = {'BEAST': 1,    'CRUISE': 2,     'BUNKER': 0}
+# CAUTION: BTC>MA200(장기 상승) 구간에서 BTC<MA50(단기 조정) 시 — 40% 보수적 투자
+GEAR_ALLOC  = {'BEAST': 0.90, 'CRUISE': 0.70, 'CAUTION': 0.40, 'BUNKER': 0.00}
+GEAR_MAX    = {'BEAST': 1,    'CRUISE': 2,     'CAUTION': 1,    'BUNKER': 0}
 
 # 피라미딩 (BEAST 전용) — 3단계 40/30/30
 LOT_SPLITS       = [0.40, 0.30, 0.30]
@@ -110,35 +111,44 @@ def detect_gear(btc_df):
     vol_ma = btc_df['volume'].rolling(20).mean().iloc[-1]
     vol_ratio = vol / vol_ma if vol_ma > 0 else 1.0
 
-    # BUNKER 즉시 트리거 (단 하나라도)
-    bunker_triggers = {
-        'BTC<MA50'  : price < ma50,
-        'RSI과열'   : rsi > BUNKER_RSI,
-        '7일급락'   : mom7 < BUNKER_DROP,
+    below_ma50   = price < ma50
+    above_ma200  = price > ma200
+    rsi_hot      = rsi > BUNKER_RSI
+    crash7       = mom7 < BUNKER_DROP
+
+    active = [k for k, v in {'BTC<MA50': below_ma50, 'RSI과열': rsi_hot,
+                              '7일급락': crash7}.items() if v]
+    base_details = {
+        'price': price, 'ma50': ma50, 'ma200': ma200,
+        'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
+        'trigger': active,
     }
-    if any(bunker_triggers.values()):
-        active = [k for k, v in bunker_triggers.items() if v]
-        return 'BUNKER', {
-            'price': price, 'ma50': ma50, 'ma200': ma200,
-            'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
-            'trigger': active,
-        }
+
+    # V4 동적 전환: MA200 기준으로 레짐 구분
+    # - 장기 하락장(BTC<MA200): 원본 V1 — BTC<MA50 하나만으로도 BUNKER
+    # - 장기 상승장(BTC>MA200): 개선 V3 — RSI과열/7일급락만 BUNKER, BTC<MA50 단독 → CAUTION
+    if above_ma200:
+        go_bunker = rsi_hot or crash7
+    else:
+        go_bunker = below_ma50 or rsi_hot or crash7
+
+    if go_bunker:
+        return 'BUNKER', base_details
 
     # BEAST 조건 채점
     beast_conds = {
         'BTC>MA50'    : price > ma50,
-        'BTC>MA200'   : price > ma200,
+        'BTC>MA200'   : above_ma200,
         'RSI적정'     : rsi < BEAST_RSI_MAX,
         '거래량확장'  : vol_ratio >= BEAST_VOL_MIN,
         '7일모멘텀'   : mom7 >= BEAST_MOM_MIN,
     }
     beast_score = sum(beast_conds.values())
+    details = {**base_details, 'beast_score': beast_score, 'conds': beast_conds}
 
-    details = {
-        'price': price, 'ma50': ma50, 'ma200': ma200,
-        'rsi': rsi, 'mom7': mom7, 'vol_ratio': vol_ratio,
-        'beast_score': beast_score, 'conds': beast_conds,
-    }
+    # 장기 상승장(BTC>MA200)에서 BTC<MA50 단독 조정 → CAUTION (40% 보수적 투자)
+    if above_ma200 and below_ma50:
+        return 'CAUTION', details
 
     if beast_score >= BEAST_COND_NEED:
         return 'BEAST', details
@@ -415,11 +425,12 @@ def run(state, gear, gear_details, scores):
 
 # ── 대시보드 ──────────────────────────────────────────────────────────────────
 
-GEAR_ICON = {'BEAST': '★ BEAST', 'CRUISE': '◎ CRUISE', 'BUNKER': '■ BUNKER'}
+GEAR_ICON = {'BEAST': '★ BEAST', 'CRUISE': '◎ CRUISE', 'CAUTION': '▲ CAUTION', 'BUNKER': '■ BUNKER'}
 GEAR_DESC = {
-    'BEAST' : '공격 모드 (90% 투입, 피라미딩)',
-    'CRUISE': '표준 모드 (70% 투입, 분산)',
-    'BUNKER': '방어 모드 (전량 현금)',
+    'BEAST'  : '공격 모드 (90% 투입, 피라미딩)',
+    'CRUISE' : '표준 모드 (70% 투입, 분산)',
+    'CAUTION': '주의 모드 (40% 투입, 1코인) — MA200 상승장 + MA50 단기조정',
+    'BUNKER' : '방어 모드 (전량 현금)',
 }
 
 def print_dashboard(state, gear, gear_details, scores, actions):
