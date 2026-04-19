@@ -21,7 +21,7 @@ from apex_bot import (
     fetch_ohlcv, calc_atr,
     paper_sell_all, paper_sell_partial,
     total_value, append_log,
-    HARD_STOP_PCT, TRAIL_ATR_MULT, PARTIAL_PROFIT, ATR_PERIOD,
+    HARD_STOP_PCT, TRAIL_ATR_MULT, TRAIL_ATR_MULT_BULL, PARTIAL_PROFIT, ATR_PERIOD,
     STATE_FILE,
 )
 
@@ -137,7 +137,8 @@ def main():
             changed = True
 
         if atr is not None:
-            new_trail = round(pos['hwm'] - atr * TRAIL_ATR_MULT)
+            atr_mult  = TRAIL_ATR_MULT_BULL if pos.get('bull_macro') else TRAIL_ATR_MULT
+            new_trail = round(pos['hwm'] - atr * atr_mult)
             if new_trail > pos['trailing_stop']:
                 print(f'  → 트레일링 스탑 갱신: {pos["trailing_stop"]:,} → {new_trail:,}')
                 pos['trailing_stop'] = new_trail
