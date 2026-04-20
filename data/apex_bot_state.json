@@ -30,4 +30,10 @@
       "hard_stop": 101927720,
       "trailing_stop": 104692143,
       "partial_exited": false,
-      "bull_macro": 
+      "bull_macro": true
+    }
+  },
+  "krw": 292712.0,
+  "init_krw": 1000000.0,
+  "last_date": "2026-04-20"
+}

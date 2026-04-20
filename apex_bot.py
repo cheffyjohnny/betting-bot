@@ -215,8 +215,10 @@ def load_state():
 
 
 def save_state(state):
-    with open(STATE_FILE, 'w', encoding='utf-8') as f:
+    tmp = STATE_FILE.with_suffix('.tmp')
+    with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
+    tmp.replace(STATE_FILE)
 
 
 def append_log(record):

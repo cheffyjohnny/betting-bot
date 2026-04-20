@@ -37,13 +37,24 @@ def now_kst():
 def load_state():
     if not STATE_FILE.exists():
         return None
-    with open(STATE_FILE, encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(STATE_FILE, encoding='utf-8') as f:
+            content = f.read().strip()
+            if not content:
+                print('상태 파일이 비어있음.')
+                return None
+            return json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f'[경고] 상태 파일 JSON 오류: {e}')
+        print('상태 파일이 손상되었습니다. apex_bot.py를 실행해 재초기화 필요.')
+        return None
 
 
 def save_state(state):
-    with open(STATE_FILE, 'w', encoding='utf-8') as f:
+    tmp = STATE_FILE.with_suffix('.tmp')
+    with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
+    tmp.replace(STATE_FILE)
 
 
 def append_stop_log(record):
