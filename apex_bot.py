@@ -314,7 +314,7 @@ def run(state, gear, gear_details, scores):
     actions    = []
     alloc      = GEAR_ALLOC[gear]
     max_pos    = GEAR_MAX[gear]
-    bull_macro = gear_details.get('price', 0) > gear_details.get('ma200', 0)
+    bull_macro = bool(gear_details.get('price', 0) > gear_details.get('ma200', 0))
 
     portfolio = total_value(state, scores)
 
