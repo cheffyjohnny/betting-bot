@@ -13,7 +13,7 @@
       "avg_entry": 3466000,
       "hwm": 3474000.0,
       "hard_stop": 3188720,
-      "trailing_stop": 3189857,
+      "trailing_stop": 3217000,
       "partial_exited": false
     },
     "BTC": {
@@ -35,5 +35,5 @@
   },
   "krw": 292712.0,
   "init_krw": 1000000.0,
-  "last_date": "2026-04-20"
+  "last_date": "2026-04-21"
 }
