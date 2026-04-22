@@ -11,9 +11,9 @@
       ],
       "total_qty": 0.10381419503750722,
       "avg_entry": 3466000,
-      "hwm": 3546000.0,
+      "hwm": 3549000.0,
       "hard_stop": 3188720,
-      "trailing_stop": 3280286,
+      "trailing_stop": 3283286,
       "partial_exited": false
     },
     "BTC": {
