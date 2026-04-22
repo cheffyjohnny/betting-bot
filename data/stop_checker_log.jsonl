@@ -5,3 +5,4 @@
 {"ts": "2026-04-21 00:19 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3474000.0, "trailing_stop": 3189857}, "BTC": {"avg_entry": 110791000, "hwm": 111524000.0, "trailing_stop": 104692143}}, "krw": 292712}
 {"ts": "2026-04-21 04:14 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3474000.0, "trailing_stop": 3189857}, "BTC": {"avg_entry": 110791000, "hwm": 112941000.0, "trailing_stop": 104692143}}, "krw": 292712}
 {"ts": "2026-04-21 20:13 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3474000.0, "trailing_stop": 3217000}, "BTC": {"avg_entry": 110791000, "hwm": 112974000.0, "trailing_stop": 104692143}}, "krw": 292712}
+{"ts": "2026-04-22 13:50 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3491000.0, "trailing_stop": 3234714}, "BTC": {"avg_entry": 110791000, "hwm": 114513000.0, "trailing_stop": 105970071}}, "krw": 292712}
