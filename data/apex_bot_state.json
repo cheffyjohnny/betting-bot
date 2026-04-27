@@ -13,7 +13,7 @@
       "avg_entry": 3466000,
       "hwm": 3549000.0,
       "hard_stop": 3188720,
-      "trailing_stop": 3324143,
+      "trailing_stop": 3343429,
       "partial_exited": false
     },
     "BTC": {
@@ -26,14 +26,14 @@
       ],
       "total_qty": 0.0031330243886519057,
       "avg_entry": 110791000,
-      "hwm": 116849000.0,
+      "hwm": 117192000.0,
       "hard_stop": 101927720,
-      "trailing_stop": 108799786,
+      "trailing_stop": 109555500,
       "partial_exited": false,
       "bull_macro": true
     }
   },
   "krw": 292712.0,
   "init_krw": 1000000.0,
-  "last_date": "2026-04-26"
+  "last_date": "2026-04-27"
 }
