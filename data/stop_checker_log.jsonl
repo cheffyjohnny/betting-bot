@@ -12,3 +12,4 @@
 {"ts": "2026-04-23 04:21 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3549000.0, "trailing_stop": 3283286}, "BTC": {"avg_entry": 110791000, "hwm": 116849000.0, "trailing_stop": 107843214}}, "krw": 292712}
 {"ts": "2026-04-30 00:58 KST", "actions": [], "positions": {"ETH": {"avg_entry": 3466000, "hwm": 3549000.0, "trailing_stop": 3346857, "price": 3390000.0, "pct": -2.19}, "BTC": {"avg_entry": 110791000, "hwm": 117192000.0, "trailing_stop": 109555500, "price": 113246000.0, "pct": 2.22}}, "krw": 292712}
 {"ts": "2026-04-30 04:43 KST", "actions": ["[트레일링 스탑] ETH @ 3,340,000.0원  (-3.64%)  회수=346,566원"], "positions": {"BTC": {"avg_entry": 110791000, "hwm": 117192000.0, "trailing_stop": 109555500, "price": 113141000.0, "pct": 2.12}}, "krw": 639278}
+{"ts": "2026-04-30 08:00 KST", "actions": [], "positions": {"BTC": {"avg_entry": 110791000, "hwm": 117192000.0, "trailing_stop": 109555500, "price": 113787000.0, "pct": 2.7}}, "krw": 639278}
