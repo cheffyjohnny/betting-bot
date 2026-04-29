@@ -8,6 +8,8 @@ on:
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     permissions:
       contents: write       # 상태 파일 커밋 권한

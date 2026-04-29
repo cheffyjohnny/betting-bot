@@ -89,8 +89,9 @@ def main():
 
     print(f'보유 코인: {list(positions.keys())}')
 
-    actions   = []
-    changed   = False
+    actions     = []
+    changed     = False
+    coin_prices = {}
 
     for coin in list(positions.keys()):
         pos   = positions[coin]
@@ -100,6 +101,8 @@ def main():
         if price is None:
             print(f'  {coin} 가격 조회 실패 — 스킵')
             continue
+
+        coin_prices[coin] = price
 
         avg_entry = pos['avg_entry']
         hwm       = pos['hwm']
@@ -158,17 +161,29 @@ def main():
         if not actions:
             print(f'  → 이상 없음 (스탑 유지)')
 
+    # 로그 기록 (변경 여부와 무관하게 항상)
+    log_positions = {}
+    for c, p in state.get('positions', {}).items():
+        price_c = coin_prices.get(c)
+        log_positions[c] = {
+            'avg_entry'    : p['avg_entry'],
+            'hwm'          : p['hwm'],
+            'trailing_stop': p['trailing_stop'],
+            'price'        : price_c,
+            'pct'          : round((price_c - p['avg_entry']) / p['avg_entry'] * 100, 2)
+                             if price_c else None,
+        }
+
+    append_stop_log({
+        'ts'       : ts,
+        'actions'  : actions,
+        'positions': log_positions,
+        'krw'      : round(state['krw']),
+    })
+
     # 변경사항 저장
     if changed:
         save_state(state)
-        append_stop_log({
-            'ts'       : ts,
-            'actions'  : actions,
-            'positions': {c: {'avg_entry': p['avg_entry'], 'hwm': p['hwm'],
-                               'trailing_stop': p['trailing_stop']}
-                          for c, p in state.get('positions', {}).items()},
-            'krw'      : round(state['krw']),
-        })
         print(f'\n상태 저장 완료.')
     else:
         print(f'\n변경사항 없음.')
