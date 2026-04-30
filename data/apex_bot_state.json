@@ -16,9 +16,25 @@
       "trailing_stop": 109555500,
       "partial_exited": false,
       "bull_macro": true
+    },
+    "ETH": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 0.10363375817608178,
+          "entry": 3354000.0
+        }
+      ],
+      "total_qty": 0.10363375817608178,
+      "avg_entry": 3354000,
+      "hwm": 3354000.0,
+      "hard_stop": 3085680,
+      "trailing_stop": 3139714,
+      "partial_exited": false,
+      "bull_macro": false
     }
   },
-  "krw": 639278.0417195614,
+  "krw": 291516.53604414547,
   "init_krw": 1000000.0,
-  "last_date": "2026-04-29"
+  "last_date": "2026-04-30"
 }
