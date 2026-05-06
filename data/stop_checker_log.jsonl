@@ -51,3 +51,4 @@
 {"ts": "2026-05-06 14:33 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114440329, "hwm": 120700000.0, "trailing_stop": 114292214, "price": 119496000.0, "pct": 4.42}}, "krw": 374730}
 {"ts": "2026-05-06 20:52 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114440329, "hwm": 120700000.0, "trailing_stop": 114292214, "price": 120579000.0, "pct": 5.36}}, "krw": 374730}
 {"ts": "2026-05-07 01:03 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114440329, "hwm": 120700000.0, "trailing_stop": 114292214, "price": 119964000.0, "pct": 4.83}}, "krw": 374730}
+{"ts": "2026-05-07 04:52 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114440329, "hwm": 120700000.0, "trailing_stop": 114292214, "price": 119681000.0, "pct": 4.58}}, "krw": 374730}
