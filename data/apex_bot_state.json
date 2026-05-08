@@ -22,24 +22,24 @@
       "partial_exited": false,
       "bull_macro": true
     },
-    "ETH": {
+    "SOL": {
       "lots": [
         {
           "lot": 1,
-          "qty": 0.10437539688906809,
-          "entry": 3409000.0
+          "qty": 2.701886915843231,
+          "entry": 130100.0
         }
       ],
-      "total_qty": 0.10437539688906809,
-      "avg_entry": 3409000,
-      "hwm": 3428000.0,
-      "hard_stop": 3136280,
-      "trailing_stop": 3262286,
+      "total_qty": 2.701886915843231,
+      "avg_entry": 130100,
+      "hwm": 130100.0,
+      "hard_stop": 119692,
+      "trailing_stop": 124200,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 18736.511834592733,
+  "krw": 18510.0701798902,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-07"
+  "last_date": "2026-05-08"
 }
