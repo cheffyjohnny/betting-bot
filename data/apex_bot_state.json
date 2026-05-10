@@ -13,13 +13,29 @@
       "avg_entry": 130100,
       "hwm": 138000.0,
       "hard_stop": 119692,
-      "trailing_stop": 131071,
+      "trailing_stop": 131114,
+      "partial_exited": false,
+      "bull_macro": false
+    },
+    "BTC": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 0.001520842280498323,
+          "entry": 119050000.0
+        }
+      ],
+      "total_qty": 0.001520842280498323,
+      "avg_entry": 119050000,
+      "hwm": 119050000.0,
+      "hard_stop": 109526000,
+      "trailing_stop": 114744143,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 664696.1433623717,
+  "krw": 483549.296445588,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-09",
+  "last_date": "2026-05-10",
   "beast_streak": 0
 }
