@@ -13,29 +13,29 @@
       "avg_entry": 130100,
       "hwm": 141000.0,
       "hard_stop": 119692,
-      "trailing_stop": 133543,
+      "trailing_stop": 134029,
       "partial_exited": false,
       "bull_macro": false
     },
-    "BTC": {
+    "XRP": {
       "lots": [
         {
           "lot": 1,
-          "qty": 0.001520842280498323,
-          "entry": 119050000.0
+          "qty": 85.36219523533121,
+          "entry": 2140.0
         }
       ],
-      "total_qty": 0.001520842280498323,
-      "avg_entry": 119050000,
-      "hwm": 119911000.0,
-      "hard_stop": 109526000,
-      "trailing_stop": 115363286,
+      "total_qty": 85.36219523533121,
+      "avg_entry": 2140,
+      "hwm": 2140.0,
+      "hard_stop": 1969,
+      "trailing_stop": 2044,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 483549.296445588,
+  "krw": 482447.79841334047,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-10",
+  "last_date": "2026-05-11",
   "beast_streak": 0
 }
