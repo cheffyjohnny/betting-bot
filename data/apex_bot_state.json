@@ -1,25 +1,41 @@
 {
   "gear": "CRUISE",
   "positions": {
-    "BTC": {
+    "SOL": {
       "lots": [
         {
           "lot": 1,
-          "qty": 0.001525265323524407,
-          "entry": 120104000.0
+          "qty": 1.336324622644068,
+          "entry": 134400.0
         }
       ],
-      "total_qty": 0.001525265323524407,
-      "avg_entry": 120104000,
-      "hwm": 120104000.0,
-      "hard_stop": 110495680,
-      "trailing_stop": 116136286,
+      "total_qty": 1.336324622644068,
+      "avg_entry": 134400,
+      "hwm": 134400.0,
+      "hard_stop": 123648,
+      "trailing_stop": 126343,
+      "partial_exited": false,
+      "bull_macro": false
+    },
+    "XRP": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 84.95838660518578,
+          "entry": 2114.0
+        }
+      ],
+      "total_qty": 84.95838660518578,
+      "avg_entry": 2114,
+      "hwm": 2114.0,
+      "hard_stop": 1945,
+      "trailing_stop": 2013,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 847288.5122349194,
+  "krw": 667337.2040048153,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-13",
+  "last_date": "2026-05-14",
   "beast_streak": 0
 }
