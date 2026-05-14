@@ -94,3 +94,4 @@
 {"ts": "2026-05-14 01:23 KST", "actions": ["[트레일링 스탑] SOL @ 135,200.0원  (+3.92%)  회수=365,112원"], "positions": {"BTC": {"avg_entry": 120104000, "hwm": 120104000.0, "trailing_stop": 116136286, "price": 117593000.0, "pct": -2.09}}, "krw": 847289}
 {"ts": "2026-05-14 05:01 KST", "actions": [], "positions": {"BTC": {"avg_entry": 120104000, "hwm": 120104000.0, "trailing_stop": 116136286, "price": 118420000.0, "pct": -1.4}}, "krw": 847289}
 {"ts": "2026-05-14 08:08 KST", "actions": [], "positions": {"BTC": {"avg_entry": 120104000, "hwm": 120104000.0, "trailing_stop": 116136286, "price": 118068000.0, "pct": -1.7}}, "krw": 847289}
+{"ts": "2026-05-14 14:52 KST", "actions": [], "positions": {"SOL": {"avg_entry": 134400, "hwm": 135500.0, "trailing_stop": 127314, "price": 135500.0, "pct": 0.82}, "XRP": {"avg_entry": 2114, "hwm": 2132.0, "trailing_stop": 2030, "price": 2132.0, "pct": 0.85}}, "krw": 667337}
