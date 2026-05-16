@@ -1,22 +1,6 @@
 {
   "gear": "CRUISE",
   "positions": {
-    "XRP": {
-      "lots": [
-        {
-          "lot": 1,
-          "qty": 84.95838660518578,
-          "entry": 2114.0
-        }
-      ],
-      "total_qty": 84.95838660518578,
-      "avg_entry": 2114,
-      "hwm": 2237.0,
-      "hard_stop": 1945,
-      "trailing_stop": 2114,
-      "partial_exited": false,
-      "bull_macro": false
-    },
     "BTC": {
       "lots": [
         {
@@ -34,7 +18,7 @@
       "bull_macro": false
     }
   },
-  "krw": 668371.0204973243,
+  "krw": 847713.4169512216,
   "init_krw": 1000000.0,
   "last_date": "2026-05-16",
   "beast_streak": 0
