@@ -110,3 +110,4 @@
 {"ts": "2026-05-16 17:10 KST", "actions": ["[트레일링 스탑] XRP @ 2,112.0원  (-0.09%)  회수=179,342원"], "positions": {"BTC": {"avg_entry": 120339000, "hwm": 120339000.0, "trailing_stop": 116067143, "price": 116871000.0, "pct": -2.88}}, "krw": 847713}
 {"ts": "2026-05-16 20:05 KST", "actions": [], "positions": {"BTC": {"avg_entry": 120339000, "hwm": 120339000.0, "trailing_stop": 116067143, "price": 116510000.0, "pct": -3.18}}, "krw": 847713}
 {"ts": "2026-05-17 00:00 KST", "actions": [], "positions": {"BTC": {"avg_entry": 120339000, "hwm": 120339000.0, "trailing_stop": 116067143, "price": 116379000.0, "pct": -3.29}}, "krw": 847713}
+{"ts": "2026-05-17 04:11 KST", "actions": [], "positions": {"BTC": {"avg_entry": 120339000, "hwm": 120339000.0, "trailing_stop": 116067143, "price": 116660000.0, "pct": -3.06}}, "krw": 847713}
