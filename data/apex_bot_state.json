@@ -16,10 +16,26 @@
       "trailing_stop": 116067143,
       "partial_exited": false,
       "bull_macro": false
+    },
+    "XRP": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 85.04172390083654,
+          "entry": 2104.0
+        }
+      ],
+      "total_qty": 85.04172390083654,
+      "avg_entry": 2104,
+      "hwm": 2104.0,
+      "hard_stop": 1936,
+      "trailing_stop": 1966,
+      "partial_exited": false,
+      "bull_macro": false
     }
   },
-  "krw": 847713.4169512216,
+  "krw": 668696.121215994,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-16",
+  "last_date": "2026-05-17",
   "beast_streak": 0
 }
