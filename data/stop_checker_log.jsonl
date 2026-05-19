@@ -124,3 +124,4 @@
 {"ts": "2026-05-19 04:49 KST", "actions": [], "positions": {"XRP": {"avg_entry": 2104, "hwm": 2125.0, "trailing_stop": 1985, "price": 2064.0, "pct": -1.9}, "BTC": {"avg_entry": 114469000, "hwm": 114540000.0, "trailing_stop": 109839857, "price": 114290000.0, "pct": -0.16}}, "krw": 665107}
 {"ts": "2026-05-19 08:06 KST", "actions": [], "positions": {"XRP": {"avg_entry": 2104, "hwm": 2125.0, "trailing_stop": 1985, "price": 2067.0, "pct": -1.76}, "BTC": {"avg_entry": 114469000, "hwm": 114540000.0, "trailing_stop": 109839857, "price": 114494000.0, "pct": 0.02}}, "krw": 665107}
 {"ts": "2026-05-19 15:12 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114469000, "hwm": 114540000.0, "trailing_stop": 109942857, "price": 114463000.0, "pct": -0.01}}, "krw": 843946}
+{"ts": "2026-05-19 21:44 KST", "actions": [], "positions": {"BTC": {"avg_entry": 114469000, "hwm": 114540000.0, "trailing_stop": 109942857, "price": 114517000.0, "pct": 0.04}}, "krw": 843946}
