@@ -13,13 +13,13 @@
       "avg_entry": 114469000,
       "hwm": 114540000.0,
       "hard_stop": 105311480,
-      "trailing_stop": 109942857,
+      "trailing_stop": 110084714,
       "partial_exited": false,
       "bull_macro": false
     }
   },
   "krw": 843945.6354747852,
   "init_krw": 1000000.0,
-  "last_date": "2026-05-19",
+  "last_date": "2026-05-20",
   "beast_streak": 0
 }
