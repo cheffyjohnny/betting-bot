@@ -11,9 +11,9 @@
       ],
       "total_qty": 1.3901660736066714,
       "avg_entry": 128600,
-      "hwm": 128700.0,
+      "hwm": 129500.0,
       "hard_stop": 118312,
-      "trailing_stop": 119071,
+      "trailing_stop": 119757,
       "partial_exited": false,
       "bull_macro": false
     },
@@ -27,9 +27,9 @@
       ],
       "total_qty": 0.0015550821755520776,
       "avg_entry": 114962000,
-      "hwm": 114962000.0,
+      "hwm": 115545000.0,
       "hard_stop": 105765040,
-      "trailing_stop": 110310429,
+      "trailing_stop": 110794714,
       "partial_exited": false,
       "bull_macro": false
     }
