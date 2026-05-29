@@ -37,3 +37,4 @@
 {"date": "2026-05-26", "gear": "BUNKER", "beast_streak": 0, "btc_ma50": 114428360, "btc_rsi": 32.0, "btc_mom7": -0.65, "scores": {}, "positions": {}, "krw": 1021727, "actions": ["[매도 전량] BTC @ 114,962,000원  수익 178,686원  사유: BUNKER 모드 전환 — 전량 청산"]}
 {"date": "2026-05-27", "gear": "BUNKER", "beast_streak": 0, "btc_ma50": 114498040, "btc_rsi": 31.3, "btc_mom7": -2.52, "scores": {}, "positions": {}, "krw": 1021727, "actions": ["BUNKER 모드 — 현금 보유 (매매 없음)"]}
 {"date": "2026-05-28", "gear": "BUNKER", "beast_streak": 0, "btc_ma50": 114520860, "btc_rsi": 17.8, "btc_mom7": -4.91, "scores": {}, "positions": {}, "krw": 1021727, "actions": ["BUNKER 모드 — 현금 보유 (매매 없음)"]}
+{"date": "2026-05-29", "gear": "BUNKER", "beast_streak": 0, "btc_ma50": 114525040, "btc_rsi": 18.3, "btc_mom7": -4.83, "btc_bb_pct_b": -0.003, "btc_bb_expanding": true, "scores": {}, "positions": {}, "krw": 1021727, "actions": ["BUNKER 모드 — 현금 보유 (매매 없음)"]}
