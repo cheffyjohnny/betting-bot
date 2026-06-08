@@ -754,20 +754,26 @@ def run_comparison():
     v4r = results['V4_동적_하락장']
     v5r = results['V5_개선_하락장']
 
-    print(f'  {"":18}  {"V1 원본":>10}  {"V4 동적":>10}  {"V5 개선":>10}')
-    print(f'  {"─"*54}')
-    print(f'  {"[상승장 2024]":18}  {"BTC +136.67%":>32}')
-    print(f'  {"  수익률":18}  {v1b["apex_pnl"]:>+9.2f}%  {v4b["apex_pnl"]:>+9.2f}%  {v5b["apex_pnl"]:>+9.2f}%')
-    print(f'  {"  MDD":18}  {v1b["apex_mdd"]:>9.2f}%  {v4b["apex_mdd"]:>9.2f}%  {v5b["apex_mdd"]:>9.2f}%')
-    print(f'  {"  매매횟수":18}  {v1b["buy_cnt"]:>9}회  {v4b["buy_cnt"]:>9}회  {v5b["buy_cnt"]:>9}회')
-    print(f'  {"  BUNKER일수":18}  {v1b["gear_cnt"]["BUNKER"]:>9}일  {v4b["gear_cnt"]["BUNKER"]:>9}일  {v5b["gear_cnt"]["BUNKER"]:>9}일')
-    print(f'  {"  CAUTION일수":18}  {v1b["gear_cnt"]["CAUTION"]:>9}일  {v4b["gear_cnt"]["CAUTION"]:>9}일  {v5b["gear_cnt"]["CAUTION"]:>9}일')
-    print(f'  {"[하락장 25~26]":18}  {"BTC -8.68%":>32}')
-    print(f'  {"  수익률":18}  {v1r["apex_pnl"]:>+9.2f}%  {v4r["apex_pnl"]:>+9.2f}%  {v5r["apex_pnl"]:>+9.2f}%')
-    print(f'  {"  MDD":18}  {v1r["apex_mdd"]:>9.2f}%  {v4r["apex_mdd"]:>9.2f}%  {v5r["apex_mdd"]:>9.2f}%')
-    print(f'  {"  매매횟수":18}  {v1r["buy_cnt"]:>9}회  {v4r["buy_cnt"]:>9}회  {v5r["buy_cnt"]:>9}회')
-    print(f'  {"  BUNKER일수":18}  {v1r["gear_cnt"]["BUNKER"]:>9}일  {v4r["gear_cnt"]["BUNKER"]:>9}일  {v5r["gear_cnt"]["BUNKER"]:>9}일')
-    print(f'  {"  CAUTION일수":18}  {v1r["gear_cnt"]["CAUTION"]:>9}일  {v4r["gear_cnt"]["CAUTION"]:>9}일  {v5r["gear_cnt"]["CAUTION"]:>9}일')
+    def pct(v): return f'{v:>+9.2f}%'
+    def day(v): return f'{v:>9}일'
+    def cnt(v): return f'{v:>9}회'
+
+    print(f'  {"":18}  {"BTC홀딩":>10}  {"V1 원본":>10}  {"V4 동적":>10}  {"V5 개선":>10}')
+    print(f'  {"─"*62}')
+    print(f'  {"[상승장 2024]":}')
+    print(f'  {"  수익률":18}  {pct(v1b["btc_pnl"])}  {pct(v1b["apex_pnl"])}  {pct(v4b["apex_pnl"])}  {pct(v5b["apex_pnl"])}')
+    print(f'  {"  MDD":18}  {pct(v1b["btc_mdd"])}  {pct(v1b["apex_mdd"])}  {pct(v4b["apex_mdd"])}  {pct(v5b["apex_mdd"])}')
+    print(f'  {"  매매횟수":18}  {"홀딩":>10}  {cnt(v1b["buy_cnt"])}  {cnt(v4b["buy_cnt"])}  {cnt(v5b["buy_cnt"])}')
+    print(f'  {"  BUNKER일수":18}  {"-":>10}  {day(v1b["gear_cnt"]["BUNKER"])}  {day(v4b["gear_cnt"]["BUNKER"])}  {day(v5b["gear_cnt"]["BUNKER"])}')
+    print(f'  {"  CAUTION일수":18}  {"-":>10}  {day(v1b["gear_cnt"]["CAUTION"])}  {day(v4b["gear_cnt"]["CAUTION"])}  {day(v5b["gear_cnt"]["CAUTION"])}')
+    print(f'  {"[하락장 25~26]":}')
+    print(f'  {"  수익률":18}  {pct(v1r["btc_pnl"])}  {pct(v1r["apex_pnl"])}  {pct(v4r["apex_pnl"])}  {pct(v5r["apex_pnl"])}')
+    print(f'  {"  MDD":18}  {pct(v1r["btc_mdd"])}  {pct(v1r["apex_mdd"])}  {pct(v4r["apex_mdd"])}  {pct(v5r["apex_mdd"])}')
+    print(f'  {"  매매횟수":18}  {"홀딩":>10}  {cnt(v1r["buy_cnt"])}  {cnt(v4r["buy_cnt"])}  {cnt(v5r["buy_cnt"])}')
+    print(f'  {"  BUNKER일수":18}  {"-":>10}  {day(v1r["gear_cnt"]["BUNKER"])}  {day(v4r["gear_cnt"]["BUNKER"])}  {day(v5r["gear_cnt"]["BUNKER"])}')
+    print(f'  {"  CAUTION일수":18}  {"-":>10}  {day(v1r["gear_cnt"]["CAUTION"])}  {day(v4r["gear_cnt"]["CAUTION"])}  {day(v5r["gear_cnt"]["CAUTION"])}')
+    print(f'  {"─"*62}')
+    print(f'  참고: BTC 홀딩 MDD는 실제 고점 대비 낙폭 (진입 시점 무관)')
     print('=' * W)
 
 
