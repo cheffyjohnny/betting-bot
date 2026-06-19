@@ -156,13 +156,9 @@ def detect_gear(btc_df):
         'bb_expanding': band_expand,
     }
 
-    # V4 동적 전환: MA200 기준으로 레짐 구분
-    # - 장기 하락장(BTC<MA200): 원본 V1 — BTC<MA50 하나만으로도 BUNKER
-    # - 장기 상승장(BTC>MA200): 개선 V3 — RSI과열/7일급락만 BUNKER, BTC<MA50 단독 → CAUTION
-    if above_ma200:
-        go_bunker = rsi_hot or crash7
-    else:
-        go_bunker = below_ma50 or rsi_hot or crash7
+    # BUNKER: RSI 과열 또는 7일 급락 시 (bull/bear 공통)
+    # BTC<MA50 단독은 BUNKER 아님 → CAUTION으로 처리
+    go_bunker = rsi_hot or crash7
 
     if go_bunker:
         return 'BUNKER', base_details
@@ -179,8 +175,8 @@ def detect_gear(btc_df):
     beast_score = sum(beast_conds.values())
     details = {**base_details, 'beast_score': beast_score, 'conds': beast_conds}
 
-    # 장기 상승장(BTC>MA200)에서 BTC<MA50 단독 조정 → CAUTION (40% 보수적 투자)
-    if above_ma200 and below_ma50:
+    # BTC<MA50 → CAUTION (bull/bear macro 모두, 40% 보수적 투자)
+    if below_ma50:
         return 'CAUTION', details
 
     if beast_score >= BEAST_COND_NEED:
