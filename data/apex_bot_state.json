@@ -1,8 +1,25 @@
 {
   "gear": "CAUTION",
-  "positions": {},
-  "krw": 1021726.8710566065,
+  "positions": {
+    "SOL": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 1.729408988350683,
+          "entry": 118100.0
+        }
+      ],
+      "total_qty": 1.729408988350683,
+      "avg_entry": 118100,
+      "hwm": 118100.0,
+      "hard_stop": 108652,
+      "trailing_stop": 106343,
+      "partial_exited": false,
+      "bull_macro": false
+    }
+  },
+  "krw": 817381.4968452852,
   "init_krw": 1000000.0,
-  "last_date": "2026-07-07",
+  "last_date": "2026-07-08",
   "beast_streak": 0
 }
