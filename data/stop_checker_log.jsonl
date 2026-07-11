@@ -169,3 +169,4 @@
 {"ts": "2026-07-11 04:38 KST", "actions": [], "positions": {"SOL": {"avg_entry": 118100, "hwm": 118200.0, "trailing_stop": 107786, "price": 116100.0, "pct": -1.69}}, "krw": 817381}
 {"ts": "2026-07-11 08:01 KST", "actions": [], "positions": {"SOL": {"avg_entry": 118100, "hwm": 118200.0, "trailing_stop": 107786, "price": 116500.0, "pct": -1.35}}, "krw": 817381}
 {"ts": "2026-07-11 14:17 KST", "actions": [], "positions": {"SOL": {"avg_entry": 118100, "hwm": 118200.0, "trailing_stop": 108086, "price": 115900.0, "pct": -1.86}}, "krw": 817381}
+{"ts": "2026-07-11 17:02 KST", "actions": [], "positions": {"SOL": {"avg_entry": 118100, "hwm": 118200.0, "trailing_stop": 108086, "price": 116300.0, "pct": -1.52}}, "krw": 817381}
