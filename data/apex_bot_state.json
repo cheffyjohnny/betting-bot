@@ -1,8 +1,25 @@
 {
-  "gear": "BUNKER",
-  "positions": {},
-  "krw": 1021726.8710566065,
+  "gear": "CAUTION",
+  "positions": {
+    "ETH": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 0.07525245673146601,
+          "entry": 2695000.0
+        }
+      ],
+      "total_qty": 0.07525245673146601,
+      "avg_entry": 2695000,
+      "hwm": 2695000.0,
+      "hard_stop": 2479400,
+      "trailing_stop": 2500143,
+      "partial_exited": false,
+      "bull_macro": false
+    }
+  },
+  "krw": 811528.7209014745,
   "init_krw": 1000000.0,
-  "last_date": "2026-06-19",
+  "last_date": "2026-07-13",
   "beast_streak": 0
 }
