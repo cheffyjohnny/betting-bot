@@ -1,5 +1,5 @@
 {
-  "gear": "CAUTION",
+  "gear": "CRUISE",
   "positions": {
     "ETH": {
       "lots": [
@@ -13,13 +13,29 @@
       "avg_entry": 2695000,
       "hwm": 2843000.0,
       "hard_stop": 2479400,
-      "trailing_stop": 2652286,
+      "trailing_stop": 2655571,
+      "partial_exited": false,
+      "bull_macro": false
+    },
+    "SOL": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 1.5923426484388767,
+          "entry": 111900.0
+        }
+      ],
+      "total_qty": 1.5923426484388767,
+      "avg_entry": 111900,
+      "hwm": 111900.0,
+      "hard_stop": 102948,
+      "trailing_stop": 104429,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 811528.7209014745,
+  "krw": 633256.4424019144,
   "init_krw": 1000000.0,
-  "last_date": "2026-07-18",
+  "last_date": "2026-07-19",
   "beast_streak": 0
 }
