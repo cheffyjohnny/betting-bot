@@ -13,7 +13,7 @@
       "avg_entry": 2695000,
       "hwm": 2843000.0,
       "hard_stop": 2479400,
-      "trailing_stop": 2655571,
+      "trailing_stop": 2669143,
       "partial_exited": false,
       "bull_macro": false
     },
@@ -27,15 +27,15 @@
       ],
       "total_qty": 1.5923426484388767,
       "avg_entry": 111900,
-      "hwm": 112400.0,
+      "hwm": 112700.0,
       "hard_stop": 102948,
-      "trailing_stop": 104857,
+      "trailing_stop": 105814,
       "partial_exited": false,
       "bull_macro": false
     }
   },
   "krw": 633256.4424019144,
   "init_krw": 1000000.0,
-  "last_date": "2026-07-19",
+  "last_date": "2026-07-20",
   "beast_streak": 0
 }
