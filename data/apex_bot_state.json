@@ -27,7 +27,7 @@
       ],
       "total_qty": 1.5923426484388767,
       "avg_entry": 111900,
-      "hwm": 112700.0,
+      "hwm": 112800.0,
       "hard_stop": 102948,
       "trailing_stop": 105814,
       "partial_exited": false,
