@@ -252,3 +252,4 @@
 {"ts": "2026-07-25 00:27 KST", "actions": ["[트레일링 스탑] SOL @ 108,300.0원  (-3.22%)  회수=172,364원"], "positions": {"ETH": {"avg_entry": 2695000, "hwm": 2843000.0, "trailing_stop": 2677000, "price": 2725000.0, "pct": 1.11}}, "krw": 805621}
 {"ts": "2026-07-25 04:35 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2695000, "hwm": 2843000.0, "trailing_stop": 2677000, "price": 2726000.0, "pct": 1.15}}, "krw": 805621}
 {"ts": "2026-07-25 08:04 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2695000, "hwm": 2843000.0, "trailing_stop": 2677000, "price": 2726000.0, "pct": 1.15}}, "krw": 805621}
+{"ts": "2026-07-25 14:18 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2695000, "hwm": 2843000.0, "trailing_stop": 2678429, "price": 2726000.0, "pct": 1.15}}, "krw": 805621}
