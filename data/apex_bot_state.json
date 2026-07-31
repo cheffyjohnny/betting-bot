@@ -5,21 +5,21 @@
       "lots": [
         {
           "lot": 1,
-          "qty": 0.07525245673146601,
-          "entry": 2695000.0
+          "qty": 0.07443358884956015,
+          "entry": 2711000.0
         }
       ],
-      "total_qty": 0.07525245673146601,
-      "avg_entry": 2695000,
-      "hwm": 2859000.0,
-      "hard_stop": 2479400,
-      "trailing_stop": 2706571,
+      "total_qty": 0.07443358884956015,
+      "avg_entry": 2711000,
+      "hwm": 2711000.0,
+      "hard_stop": 2494120,
+      "trailing_stop": 2564143,
       "partial_exited": false,
       "bull_macro": false
     }
   },
-  "krw": 805442.612668217,
+  "krw": 807459.6135886776,
   "init_krw": 1000000.0,
-  "last_date": "2026-07-30",
+  "last_date": "2026-07-31",
   "beast_streak": 0
 }
