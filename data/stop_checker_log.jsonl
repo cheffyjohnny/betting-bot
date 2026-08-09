@@ -340,3 +340,4 @@
 {"ts": "2026-08-08 23:35 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2711000, "hwm": 2719000.0, "trailing_stop": 2574143, "price": 2707000.0, "pct": -0.15}}, "krw": 807460}
 {"ts": "2026-08-09 03:42 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2711000, "hwm": 2719000.0, "trailing_stop": 2574143, "price": 2699000.0, "pct": -0.44}}, "krw": 807460}
 {"ts": "2026-08-09 07:33 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2711000, "hwm": 2719000.0, "trailing_stop": 2574143, "price": 2696000.0, "pct": -0.55}}, "krw": 807460}
+{"ts": "2026-08-09 12:46 KST", "actions": [], "positions": {"ETH": {"avg_entry": 2711000, "hwm": 2719000.0, "trailing_stop": 2583714, "price": 2691000.0, "pct": -0.74}}, "krw": 807460}
