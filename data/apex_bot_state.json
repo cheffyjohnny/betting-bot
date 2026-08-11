@@ -1,25 +1,8 @@
 {
   "gear": "CAUTION",
-  "positions": {
-    "ETH": {
-      "lots": [
-        {
-          "lot": 1,
-          "qty": 0.07443358884956015,
-          "entry": 2711000.0
-        }
-      ],
-      "total_qty": 0.07443358884956015,
-      "avg_entry": 2711000,
-      "hwm": 2719000.0,
-      "hard_stop": 2494120,
-      "trailing_stop": 2593714,
-      "partial_exited": false,
-      "bull_macro": false
-    }
-  },
-  "krw": 807459.6135886776,
+  "positions": {},
+  "krw": 1009148.1782301497,
   "init_krw": 1000000.0,
-  "last_date": "2026-08-10",
+  "last_date": "2026-08-11",
   "beast_streak": 0
 }
