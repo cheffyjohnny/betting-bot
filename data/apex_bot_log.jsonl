@@ -118,3 +118,4 @@
 {"date": "2026-08-15", "gear": "CAUTION", "beast_streak": 0, "btc_ma50": 92823300, "btc_rsi": 35.3, "btc_mom7": -2.5, "btc_bb_pct_b": 0.1, "btc_bb_expanding": false, "scores": {}, "positions": {}, "krw": 1009148, "actions": []}
 {"date": "2026-08-16", "gear": "CAUTION", "beast_streak": 0, "btc_ma50": 92789400, "btc_rsi": 33.3, "btc_mom7": -2.04, "btc_bb_pct_b": 0.154, "btc_bb_expanding": false, "scores": {}, "positions": {}, "krw": 1009148, "actions": []}
 {"date": "2026-08-17", "gear": "CAUTION", "beast_streak": 0, "btc_ma50": 92766420, "btc_rsi": 36.3, "btc_mom7": -1.26, "btc_bb_pct_b": 0.153, "btc_bb_expanding": false, "scores": {}, "positions": {}, "krw": 1009148, "actions": []}
+{"date": "2026-08-18", "gear": "CAUTION", "beast_streak": 0, "btc_ma50": 92793000, "btc_rsi": 44.5, "btc_mom7": 1.13, "btc_bb_pct_b": 0.543, "btc_bb_expanding": false, "scores": {}, "positions": {}, "krw": 1009148, "actions": []}
