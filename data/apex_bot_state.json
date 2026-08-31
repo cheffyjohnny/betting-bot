@@ -1,8 +1,25 @@
 {
-  "gear": "BUNKER",
-  "positions": {},
-  "krw": 1009148.1782301497,
+  "gear": "BEAST",
+  "positions": {
+    "SOL": {
+      "lots": [
+        {
+          "lot": 1,
+          "qty": 2.575260265892003,
+          "entry": 141000.0
+        }
+      ],
+      "total_qty": 2.575260265892003,
+      "avg_entry": 141000,
+      "hwm": 141000.0,
+      "hard_stop": 129720,
+      "trailing_stop": 114471,
+      "partial_exited": false,
+      "bull_macro": true
+    }
+  },
+  "krw": 645854.8340672958,
   "init_krw": 1000000.0,
-  "last_date": "2026-08-30",
-  "beast_streak": 0
+  "last_date": "2026-08-31",
+  "beast_streak": 1
 }
