@@ -355,3 +355,4 @@
 {"ts": "2026-08-31 17:24 KST", "actions": [], "positions": {"SOL": {"avg_entry": 141000, "hwm": 141500.0, "trailing_stop": 114800, "price": 141500.0, "pct": 0.35}}, "krw": 645855}
 {"ts": "2026-09-01 02:28 KST", "actions": [], "positions": {"SOL": {"avg_entry": 141000, "hwm": 141900.0, "trailing_stop": 114921, "price": 141900.0, "pct": 0.64}}, "krw": 645855}
 {"ts": "2026-09-01 07:40 KST", "actions": [], "positions": {"SOL": {"avg_entry": 141000, "hwm": 142200.0, "trailing_stop": 115114, "price": 142200.0, "pct": 0.85}}, "krw": 645855}
+{"ts": "2026-09-01 16:31 KST", "actions": [], "positions": {"SOL": {"avg_entry": 141000, "hwm": 142600.0, "trailing_stop": 115900, "price": 142400.0, "pct": 0.99}}, "krw": 645855}
