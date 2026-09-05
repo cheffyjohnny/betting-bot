@@ -13,7 +13,7 @@
       "avg_entry": 141000,
       "hwm": 143300.0,
       "hard_stop": 129720,
-      "trailing_stop": 117971,
+      "trailing_stop": 121057,
       "partial_exited": false,
       "bull_macro": true
     },
@@ -34,13 +34,13 @@
       "avg_entry": 3347984,
       "hwm": 3431000.0,
       "hard_stop": 3080145,
-      "trailing_stop": 3047857,
+      "trailing_stop": 3071000,
       "partial_exited": false,
       "bull_macro": true
     }
   },
   "krw": 51085.77935597667,
   "init_krw": 1000000.0,
-  "last_date": "2026-09-04",
-  "beast_streak": 5
+  "last_date": "2026-09-05",
+  "beast_streak": 6
 }
