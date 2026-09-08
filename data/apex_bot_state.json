@@ -13,7 +13,7 @@
       "avg_entry": 141000,
       "hwm": 145200.0,
       "hard_stop": 129720,
-      "trailing_stop": 124007,
+      "trailing_stop": 125336,
       "partial_exited": false,
       "bull_macro": true
     },
@@ -34,7 +34,7 @@
       "avg_entry": 3347984,
       "hwm": 3434000.0,
       "hard_stop": 3080145,
-      "trailing_stop": 3103786,
+      "trailing_stop": 3118571,
       "partial_exited": false,
       "bull_macro": true
     }
